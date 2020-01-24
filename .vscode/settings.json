@@ -1,0 +1,14 @@
+{
+    "mochaExplorer.files": ["test/**/*.spec.ts"],
+    "mochaExplorer.require": [
+        "ts-node/register"
+    ],
+    "mochaExplorer.debuggerConfig": "Debug Mocha Tests",
+    // "mochaExplorer.nodeArgs": "--harmony-async-iteration",
+    "files.exclude": {
+        "coverage": true,
+        "bin": true,
+        "node_modules": true,
+        "src/compile-cache": true
+    }
+}

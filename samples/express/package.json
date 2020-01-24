@@ -1,0 +1,10 @@
+{
+    "name": "smartloc-express-sample",
+    "dependencies": {
+        "express": "^4.17.1"
+    },
+    "devDependencies": {
+        "ts-node": "^8.6.2",
+        "typescript": "^3.7.5"
+    }
+}
