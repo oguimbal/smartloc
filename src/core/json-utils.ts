@@ -1,6 +1,7 @@
 import { MultiLoc, SingleLoc, SmartLoc, withSerializationContext, withLocales } from './smartloc';
 import moment from 'moment';
 import { isLocStr } from './literal';
+import { TranslationOf, StorableOf } from './interfaces';
 
 /**
  * Parse a JSON string where localized strings have been serialized in their non translated form
@@ -68,12 +69,12 @@ function _toLocalizable(value: any, depth: number) {
  * Transforms an object so it can be stored with localized strings in their non translated form
  * @returns Either a new copy of your object, or your object (if had no smarloc strings in it)
  */
-export function toJsonStorable(value: any) {
+export function toJsonStorable<T>(value: T): StorableOf<T> {
     return withSerializationContext(() => _toJsonStorable(value, 50));
 }
 
 /** Translates an object to the given language */
-export function translateObject(locales: string | string[], object: any) {
+export function translateObject<T>(locales: string | string[], object: T): TranslationOf<T> {
     if (typeof locales === 'string') {
         locales = [locales];
     }
@@ -81,7 +82,7 @@ export function translateObject(locales: string | string[], object: any) {
 }
 
 /** Translates an object according to the current context (call this when wrapped in withSerializationContext() or withLocales()) */
-export function translateInContxt(object: any) {
+export function translateInContext(object: any) {
     return _toJsonStorable(object, 50);
 }
 

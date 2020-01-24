@@ -5,7 +5,7 @@ import {isLocStr} from '.';
 import parser from 'accept-language-parser';
 import { withLocales } from './core/smartloc';
 import moment from 'moment';
-import { translateInContxt } from './core/json-utils';
+import { translateInContext } from './core/json-utils';
 
 
 const localeTag = Symbol('_smartloc_locale');
@@ -73,7 +73,7 @@ export function localizeSchema(schema: GraphQLSchema) {
                 continue;
             }
             if (field.type instanceof GraphQLScalarType && (field.type.name === 'JSON' || field.type.name === 'JSONObject')) {
-                patchField(id, field, v => translateInContxt(v));
+                patchField(id, field, v => translateInContext(v));
                 continue;
             }
         }

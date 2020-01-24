@@ -24,3 +24,15 @@ export interface ILocaleDef {
     readonly literals: ILiteralLocalizer;
     localize(id: string, parts: TemplateStringsArray, placeholders: LocLiteral[]): string;
 }
+
+
+export type TranslationOf<T> = T extends LocStr ? string
+    : T extends Object ? {[K in keyof T]: TranslationOf<T[K]>}
+    : T extends (infer E)[] ?  TranslationOf<E>[]
+    : T;
+
+
+export type StorableOf<T> = T extends LocStr ? (string | {[key: string]: string})
+    : T extends Object ? {[K in keyof T]: StorableOf<T[K]>}
+    : T extends (infer E)[] ?  StorableOf<E>[]
+    : T;
