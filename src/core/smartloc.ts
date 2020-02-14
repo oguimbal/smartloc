@@ -1,10 +1,20 @@
-import { getLocale, getDefaultLocale } from './locale-list';
+import { getLocale, getDefaultLocale, listLocales } from './locale-list';
 import { ILocaleDef, LocLiteral, LocStr } from './interfaces';
 import { setIsLoc } from './literal';
 import { getLocaleCode } from '../cli/utils';
 
 let langCtx: ILocaleDef[] = null;
-let serialContext = false;
+let serialContext: SerializationContextOptions;
+
+export interface SerializationContextOptions {
+    /** HOw non self-descriptive (MultiLoc, SingleLoc, ...) will be transformed. Defaults to 'id'.
+     *
+     * id => will serialize its ID ... the context of deserialization will be required to have the given translation
+     * skip => will be left as it (=> serialization will translate it)
+     * toMulti => translates to all registered languages, and serializes as a 'multi'
+     */
+    nonSelfDescriptive?: 'skip' | 'toMulti' | 'id';
+}
 /**
  * Execute something in the given locales context.
  * @param acceptLanguages The accepted languages, by order of preference
@@ -32,10 +42,10 @@ export function withLocales<T = void>(acceptLanguages: string[], action: () => T
  * Execute something in a context where .toJson() loc strings
  * will be serialized into a form that is parsable via jsonParseLocalized()
  */
-export function withSerializationContext<T = void>(action: () => T) {
+export function withSerializationContext<T = void>(action: () => T, options?: SerializationContextOptions) {
     const os = serialContext;
     try {
-        serialContext = true;
+        serialContext = options || {};
         return action();
     } finally {
         serialContext = os;
@@ -80,7 +90,22 @@ export class SmartLoc implements LocStr {
 
     toJSON() {
         if (serialContext) {
-            return `i18n/id:${this.id}`;
+            switch (serialContext.nonSelfDescriptive) {
+                case 'skip':
+                    return this;
+                case 'toMulti':
+                    const multi = {};
+                    for (const l of listLocales()) {
+                        multi[l] = this.toString(l);
+                    }
+                    // tslint:disable-next-line: no-use-before-declare
+                    return new MultiLoc(multi).toJSON();
+                default:
+                    if (this.placeholders?.length) {
+                        throw new Error(`Cannot serialize smartloc instance "${this.id}" which has placeholders ("\${}" in string definition). Please use another SerializationContextOption.nonSelfDescriptive option`);
+                    }
+                    return `i18n/id:${this.id}`;
+            }
         }
         return this.toString();
     }
@@ -125,7 +150,7 @@ export class SingleLoc implements LocStr {
 
     toJSON() {
         if (serialContext) {
-            return 'i18n/multi:' + this.text;
+            return 'i18n/single:' + this.text;
         }
         return this.text;
     }

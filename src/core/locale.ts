@@ -16,12 +16,15 @@ export class Locale implements ILocaleDef {
         if (!template) {
             return null;
         }
-        const literals = placeholders.map(x => this.literals.localize(x));
+        const literals = placeholders?.map(x => this.literals.localize(x));
         return format(template, literals);
     }
 }
 
 function format(str: string, args: string[]) {
+    if (!args || !args.length) {
+        return str;
+    }
     return str.replace(/{(\d+)}/g, function (match, number) {
         return typeof args[number] !== 'undefined'
             ? args[number]

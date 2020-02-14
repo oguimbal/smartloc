@@ -1,4 +1,4 @@
-import { MultiLoc, SingleLoc, SmartLoc, withSerializationContext, withLocales } from './smartloc';
+import { MultiLoc, SingleLoc, SmartLoc, withSerializationContext, withLocales, SerializationContextOptions } from './smartloc';
 import moment from 'moment';
 import { isLocStr } from './literal';
 import { TranslationOf, StorableOf } from './interfaces';
@@ -26,8 +26,8 @@ function _toLocalizable(value: any, depth: number) {
     }
 
     if (typeof value === 'string') {
-        if (value.startsWith('i18n/multi:')) {
-            return new SingleLoc(value.substr('i18n/multi:'.length));
+        if (value.startsWith('i18n/single:')) {
+            return new SingleLoc(value.substr('i18n/single:'.length));
         }
         if (value.startsWith('i18n/id:')) {
             return new SmartLoc(value.substr('i18n/id:'.length), null, null);
@@ -69,8 +69,8 @@ function _toLocalizable(value: any, depth: number) {
  * Transforms an object so it can be stored with localized strings in their non translated form
  * @returns Either a new copy of your object, or your object (if had no smarloc strings in it)
  */
-export function toJsonStorable<T>(value: T): StorableOf<T> {
-    return withSerializationContext(() => _toJsonStorable(value, 50));
+export function toJsonStorable<T>(value: T, options?: SerializationContextOptions): StorableOf<T> {
+    return withSerializationContext(() => _toJsonStorable(value, 50), options);
 }
 
 /** Translates an object to the given language */

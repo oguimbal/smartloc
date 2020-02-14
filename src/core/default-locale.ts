@@ -13,7 +13,9 @@ export class DefaultLocale implements ILocaleDef {
     }
 
     localize(id: string, parts: TemplateStringsArray, placeholders: LocLiteral[]): string {
-
+        if (!parts || !placeholders) {
+            throw new Error(`The smartloc string "${id}" cannot be translated to your default locale. It is likely that is has been deserialized. In order to support deserialized strings, you MUST load your default locale as a classic locale. nb: To generate your default locale translation file through smartloc CLI, use --generateDefault option`)
+        }
         const result: string[] = [];
 
         // interleave the literals with the placeholders

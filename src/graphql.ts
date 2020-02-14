@@ -1,35 +1,91 @@
-import {GraphQLSchema, GraphQLObjectType} from 'graphql';
+import { GraphQLSchema, GraphQLObjectType } from 'graphql';
 import { GraphQLScalarType, GraphQLList, GraphQLUnionType, GraphQLField, GraphQLNonNull } from 'graphql/type/definition';
 import express from 'express';
-import {isLocStr} from '.';
+import { isLocStr } from '.';
 import parser from 'accept-language-parser';
-import { withLocales } from './core/smartloc';
+import { withLocales, MultiLoc, SingleLoc } from './core/smartloc';
 import moment from 'moment';
 import { translateInContext } from './core/json-utils';
+import { getDefaultLocale } from './core/locale-list';
+import { Kind } from 'graphql/language';
 
+const INVALID_MSG = `Invalid localizable string input. Expecting either a string in the default locale, or an object like {"en": "English translation", "fr": "Traduction française"}`;
+function parseValue(value) {
+    if (!value) {
+        return null;
+    }
+    if (typeof value === 'string') {
+        return new SingleLoc(value);
+    }
+    if (typeof value === 'object') {
+        for (const v of Object.values(value)) {
+            if (typeof v !== 'string') {
+                throw new TypeError(INVALID_MSG);
+            }
+        }
+        return new MultiLoc(value);
+    }
+    throw new TypeError(INVALID_MSG);
+}
+
+function parseObject(ast, variables) {
+    const value = Object.create(null);
+    ast.fields.forEach(field => {
+        switch (field.value.kind) {
+            case Kind.STRING:
+                value[field.name.value] = ast.value.value;
+                break;
+            case Kind.VARIABLE: {
+                const name = ast.name.value;
+                const val = variables ? variables[name] : undefined;
+                if (typeof val !== 'string' || !val) {
+                    throw new TypeError(INVALID_MSG);
+                }
+                break;
+            }
+            default:
+                throw new TypeError(INVALID_MSG);
+        }
+    });
+    return value;
+}
+
+function parseLiteral(ast, variables) {
+    switch (ast.kind) {
+        case Kind.STRING:
+            return new SingleLoc(ast.value);
+        case Kind.OBJECT:
+            return parseObject(ast, variables);
+        case Kind.NULL:
+            return null;
+        case Kind.VARIABLE: {
+            const name = ast.name.value;
+            return variables ? parseValue(variables[name]) : undefined;
+        }
+        default:
+            throw new TypeError(`Invalid localizable string input (${ast.kind}). Expecting either a string in the default locale, or an object like {"en": "English translation", "fr": "Traduction française"}`);
+    }
+}
 
 const localeTag = Symbol('_smartloc_locale');
 export const GLocString = new GraphQLScalarType({
     name: 'LocalizedString',
     description: 'A string which value depends on Accept-Language request headers.',
     serialize(value) {
-      if (isLocStr(value)) {
-        throw new TypeError(`You must apply the localizeSchema() patch to fix your schema when using LocalizedString`);
-      }
+        if (isLocStr(value)) {
+            throw new TypeError(`You must apply the localizeSchema() patch to fix your schema when using LocalizedString`);
+        }
 
-      if (value === null || value === undefined || typeof value === 'string') {
-          return value;
-      }
+        if (value === null || value === undefined || typeof value === 'string') {
+            return value;
+        }
 
-      throw new TypeError(`Graphql field of type LocalizedString expecting a localizable string`);
+        throw new TypeError(`Graphql field of type LocalizedString expecting a localizable string`);
     },
-    parseValue(value) {
-        throw new TypeError(`Localized strings cannot be used as input types`);
-    },
-    parseLiteral(ast) {
-        throw new TypeError(`Localized strings cannot be used as input types`);
-    },
+    parseValue,
+    parseLiteral,
 });
+
 
 const patchedTag = Symbol('_smartloc_patched');
 export function localizeSchema(schema: GraphQLSchema) {
@@ -53,7 +109,7 @@ export function localizeSchema(schema: GraphQLSchema) {
                 continue;
             }
             if (field.type instanceof GraphQLList) {
-                if (field.type.ofType instanceof  GraphQLObjectType) {
+                if (field.type.ofType instanceof GraphQLObjectType) {
                     patchObject(field.type.ofType);
                 }
                 continue;
@@ -88,7 +144,7 @@ function patchField(id: string, field: GraphQLField<any, any>, transform: (v: an
         return;
     }
     const or = field.resolve;
-    field.resolve = async function(source, args, ctx, info) {
+    field.resolve = async function (source, args, ctx, info) {
         const value = or
             ? await or.apply(this, [source, args, ctx, info])
             : source?.[id];
@@ -108,7 +164,7 @@ export interface ExpressContext {
 }
 export type Context<T = object> = T;
 export type ContextFunction<FunctionParams = any, ProducedContext = object> = (
-  context: FunctionParams,
+    context: FunctionParams,
 ) => Context<ProducedContext> | Promise<Context<ProducedContext>>;
 
 export function localizedContext(context: ContextFunction<ExpressContext, Context>): ContextFunction<ExpressContext, Context> {

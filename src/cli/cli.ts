@@ -49,6 +49,10 @@ const ret = yargs
         },
     })
     .positional('generateDefault', {
+        description: 'Also generates a translation file for the default locale',
+        type: 'boolean',
+    })
+    .positional('generateDefault', {
         description: 'Also generates the default locale translation file (which does not need to be translated)',
         type: 'boolean',
     })
@@ -95,7 +99,8 @@ const ret = yargs
 
             // reconciliate existing
             for (const l of others) {
-                const {dirty, missing, same} = reconciliate(l, collected);
+                const collectedCopy = JSON.parse(JSON.stringify(collected));
+                const {dirty, missing, same} = reconciliate(l, collectedCopy);
                 const feats: string[] = [];
                 if (dirty) {
                     feats.push(`${dirty} dirty translations (source changed)`);
@@ -117,6 +122,10 @@ const ret = yargs
             console.log(`Writing results...`);
             for (const l of others) {
                 await adapter.write(l);
+            }
+
+            if (args.defaultLocale) {
+                await adapter.write(collected);
             }
             console.log(`I'm done ♥`);
         } catch (e) {

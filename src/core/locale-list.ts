@@ -77,3 +77,8 @@ function baseLocale(l: string) {
     const m = /^([a-zA-Z]+)\-[a-zA-Z]+$/.exec(l);
     return m?.[1] || null;
 }
+
+export function *listLocales() {
+    yield* Object.keys(locales);
+    yield defaultLocale.id;
+}
