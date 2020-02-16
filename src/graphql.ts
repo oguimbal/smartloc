@@ -104,33 +104,27 @@ export function localizeSchema(schema: GraphQLSchema) {
             if (!field.type) {
                 continue;
             }
-            if (field.type instanceof GraphQLObjectType) {
-                patchObject(field.type);
-                continue;
-            }
-            if (field.type instanceof GraphQLList) {
-                if (field.type.ofType instanceof GraphQLObjectType) {
-                    patchObject(field.type.ofType);
+
+
+            let ft = field.type;
+            while (true) {
+                if (ft instanceof GraphQLList || ft instanceof GraphQLNonNull) {
+                    ft = ft.ofType;
+                } else {
+                    break;
                 }
-                continue;
             }
-            if (field.type instanceof GraphQLUnionType) {
-                for (const t of field.type.getTypes()) {
+
+            if (ft instanceof GraphQLUnionType) {
+                for (const t of ft.getTypes()) {
                     patchObject(t);
                 }
-                continue;
-            }
-            if (field.type instanceof GraphQLNonNull) {
-                patchObject(field.type.ofType as any);
-                continue;
-            }
-            if (field.type === GLocString) {
-                patchField(id, field, v => isLocStr(v) ? v.toString() : v);
-                continue;
-            }
-            if (field.type instanceof GraphQLScalarType && (field.type.name === 'JSON' || field.type.name === 'JSONObject')) {
-                patchField(id, field, v => translateInContext(v));
-                continue;
+            } else if (ft instanceof GraphQLObjectType) {
+                patchObject(ft);
+            } else if (ft === GLocString) {
+                patchField(id, field);
+            } else if (ft instanceof GraphQLScalarType && (ft.name === 'JSON' || ft.name === 'JSONObject')) {
+                patchField(id, field);
             }
         }
     }
@@ -139,7 +133,7 @@ export function localizeSchema(schema: GraphQLSchema) {
     return schema;
 }
 
-function patchField(id: string, field: GraphQLField<any, any>, transform: (v: any) => any) {
+function patchField(id: string, field: GraphQLField<any, any>) {
     if (field.resolve?.[patchedTag]) {
         return;
     }
@@ -151,7 +145,7 @@ function patchField(id: string, field: GraphQLField<any, any>, transform: (v: an
         const locales = value && typeof value === 'object'
             ? ctx?.[localeTag]
             : null;
-        return withLocales(locales, () => transform(value));
+        return withLocales(locales, () => translateInContext(value));
     };
     field.resolve[patchedTag] = true;
 }
