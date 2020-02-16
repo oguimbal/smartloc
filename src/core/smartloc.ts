@@ -102,7 +102,11 @@ export class SmartLoc implements LocStr {
                     return new MultiLoc(multi).toJSON();
                 default:
                     if (this.placeholders?.length) {
-                        throw new Error(`Cannot serialize smartloc instance "${this.id}" which has placeholders ("\${}" in string definition). Please use another SerializationContextOption.nonSelfDescriptive option`);
+                        return {
+                            i18n: this.id,
+                            data: this.placeholders,
+                        };
+                        // throw new Error(`Cannot serialize smartloc instance "${this.id}" which has placeholders ("\${}" in string definition). Please use another SerializationContextOption.nonSelfDescriptive option`);
                     }
                     return `i18n/id:${this.id}`;
             }

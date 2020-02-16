@@ -39,6 +39,14 @@ describe('Json serialization', () => {
         expect(toJsonStorable(str, { nonSelfDescriptive: 'id'})).to.deep.equal({ value: 'i18n/id:something' })
     });
 
+    it('toJsonStorable() handles smartloc with inclusions', () => {
+        const str = { value: loc('something')`Answer: ${42} with ${'str'}` };
+        expect(toJsonStorable(str, { nonSelfDescriptive: 'id'})).to.deep.equal({ value: {
+            i18n: 'something',
+            data: [42, 'str']
+        }})
+    });
+
     it('toJsonStorable() handles smartloc with translate option to "toMulti"', () => {
         const str = { value: loc('something')`Something` };
         addLocale('fr', {something: 'Quelque chose'})
@@ -96,5 +104,25 @@ describe('Json serialization', () => {
         expect(translated).to.equal('{"value":["Quelque chose"]}');
         translated = withLocales(['en'], () => JSON.stringify(deser));
         expect(translated).to.equal('{"value":["Something"]}');
+    })
+
+
+    it('can parse a smartloc with arguments', () => {
+        // must be registered to deserialize ids
+        addLocale('fr', {something: 'Quelque chose {0} {1}'});
+        addLocale('en-US', {something: 'Something {0} {1}'});
+
+        const str = { value: [loc('something')`Something ${'str'} ${42}`] };
+        const serial = withSerializationContext(() => JSON.stringify(str));
+        const deser = jsonParseLocalized(serial);
+        assert.instanceOf(deser.value, Array);
+        for (const k of deser.value) {
+            assert.instanceOf(k, SmartLoc);
+        }
+        // check translation
+        let translated = withLocales(['fr'], () => JSON.stringify(deser));
+        expect(translated).to.equal('{"value":["Quelque chose str 42"]}');
+        translated = withLocales(['en'], () => JSON.stringify(deser));
+        expect(translated).to.equal('{"value":["Something str 42"]}');
     })
 });

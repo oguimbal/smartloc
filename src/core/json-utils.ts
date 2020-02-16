@@ -35,7 +35,7 @@ function _toLocalizable(value: any, depth: number) {
         return value;
     }
 
-    if (typeof value !== 'object') {
+    if (typeof value !== 'object' || value instanceof Date) {
         return value;
     }
     if (value instanceof Array) {
@@ -48,6 +48,13 @@ function _toLocalizable(value: any, depth: number) {
     if (!keys.length) {
         return value;
     }
+
+    // === handle smartloc with args
+    if (keys.length === 2 && keys.includes('i18n') && keys.includes('data') && typeof value.i18n === 'string' && value.data instanceof Array) {
+        return new SmartLoc(value.i18n, null, value.data);
+    }
+
+    // === handle multi
     const ret = {};
     if (keys.some(x => !x.startsWith('i18n:'))) {
         let changed = false;
