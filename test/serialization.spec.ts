@@ -1,6 +1,6 @@
 import 'mocha';
 import { expect, assert } from 'chai';
-import { loc, setDefaultLocale, addLocale, withLocales, clearLocales, toJsonStorable, SingleLoc, MultiLoc, jsonParseLocalized } from '../src';
+import { loc, setDefaultLocale, addLocale, withLocales, clearLocales, toJsonStorable, SingleLoc, MultiLoc, jsonParseLocalized, toLocalizable } from '../src';
 import { withSerializationContext, SmartLoc } from '../src/core/smartloc';
 
 
@@ -124,5 +124,26 @@ describe('Json serialization', () => {
         expect(translated).to.equal('{"value":["Quelque chose str 42"]}');
         translated = withLocales(['en'], () => JSON.stringify(deser));
         expect(translated).to.equal('{"value":["Something str 42"]}');
-    })
+    });
+
+
+    it('should return the same object instance if no smartloc instance', async () => {
+        const obj = {
+            a: { b: [42, {c: 51 }]}
+        };
+        const ret = toJsonStorable(obj);
+        assert.isTrue(obj === ret);
+        const deser = toLocalizable(ret);
+        assert.isTrue(obj === deser);
+    });
+
+    it('should return other instance if no smartloc instance', async () => {
+        const obj = {
+            a: { b: [42, {c: loc`Whatever` }]}
+        };
+        const ret = toJsonStorable(obj);
+        assert.isFalse(obj === ret);
+        const deser = toLocalizable(ret);
+        assert.isFalse(ret === deser);
+    });
 });

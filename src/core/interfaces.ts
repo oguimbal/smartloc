@@ -32,7 +32,7 @@ export type TranslationOf<T> = T extends LocStr ? string
     : T;
 
 
-export type StorableOf<T> = T extends LocStr ? (string | {[key: string]: string})
+export type StorableOf<T> = T extends LocStr ? (string | {[key: string]: string} | {i18n: string; data: any[]})
     : T extends Object ? {[K in keyof T]: StorableOf<T[K]>}
     : T extends (infer E)[] ?  StorableOf<E>[]
     : T;

@@ -38,11 +38,19 @@ function _toLocalizable(value: any, depth: number) {
     if (typeof value !== 'object' || value instanceof Date) {
         return value;
     }
+
+    // === handle arrays
     if (value instanceof Array) {
+        const retArray = [];
+        let arrChange = false;
         for (let i = 0; i < value.length; i++) {
-            value[i] = _toLocalizable(value[i], depth - 1);
+            const thisVal = _toLocalizable(value[i], depth - 1);
+            arrChange = arrChange || thisVal !== value[i];
+            retArray.push(thisVal);
         }
-        return value;
+        return arrChange
+            ? retArray
+            : value;
     }
     const keys = Object.keys(value);
     if (!keys.length) {
@@ -56,20 +64,22 @@ function _toLocalizable(value: any, depth: number) {
 
     // === handle multi
     const ret = {};
-    if (keys.some(x => !x.startsWith('i18n:'))) {
-        let changed = false;
+    if (!keys.some(x => !x.startsWith('i18n:'))) {
         for (const k of keys) {
-            ret[k] = _toLocalizable(value[k], depth - 1);
-            changed = changed || (ret[k] !== value[k]);
+            ret[k.substr('i18n:'.length)] = value[k];
         }
-        return changed
-            ? ret
-            : value;
+        return new MultiLoc(ret);
     }
+
+    // === handle plain object
+    let changed = false;
     for (const k of keys) {
-        ret[k.substr('i18n:'.length)] = value[k];
+        ret[k] = _toLocalizable(value[k], depth - 1);
+        changed = changed || (ret[k] !== value[k]);
     }
-    return new MultiLoc(ret);
+    return changed
+        ? ret
+        : value;
 }
 
 /**
