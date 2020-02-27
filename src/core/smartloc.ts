@@ -59,6 +59,9 @@ export class TransformedLoc implements LocStr {
     }
 
     constructor(private parent: LocStr, private transformer: (x: string) => string) {
+        if (typeof transformer !== 'function') {
+            throw new Error('transformer must be a function');
+        }
         setIsLoc(this);
     }
 

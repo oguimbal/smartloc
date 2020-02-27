@@ -142,7 +142,7 @@ function patchField(id: string, field: GraphQLField<any, any>) {
         const value = or
             ? await or.apply(this, [source, args, ctx, info])
             : source?.[id];
-        const locales = value && typeof value === 'object'
+        const locales = ctx && typeof ctx === 'object'
             ? ctx?.[localeTag]
             : null;
         return withLocales(locales, () => translateInContext(value));
@@ -171,15 +171,19 @@ export function localizedContext(context: ContextFunction<ExpressContext, Contex
     }
 }
 
-export function localizedContextObject(ctx: any, locales: string[]) {
+export function localizedContextObject<T>(ctx: T, locales: string[]): T {
     if (!ctx || typeof ctx !== 'object') {
         return ctx;
     }
     ctx[localeTag] = locales;
+    return ctx;
 }
 
 function patchContextObj(req: express.Request, ctx: any) {
     if (!ctx || typeof ctx !== 'object') {
+        return ctx;
+    }
+    if (ctx[localeTag]) {
         return ctx;
     }
     const lh = req.headers['accept-language'];
