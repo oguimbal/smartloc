@@ -7,7 +7,7 @@ export interface SmartlocExpressOptions {
     /**  (optional) Waits for this promise before performing a translation. This might be for instance the promise that waits all locales to be declared via addLocale() loaded */
     waitFor?: Promise<any>;
     /** Custom resolution (will fall back on accept-language if this function does not return anything) */
-    customLocaleResolver?: (req: Express.Request) => string | string[] | null | undefined | Promise<string | string[] | null | undefined>;
+    customLocaleResolver?: (req: any) => string | string[] | null | undefined | Promise<string | string[] | null | undefined>;
     /** Error logger (gives a chance to log resolution errors) */
     errorLogger?: (err: any) => void;
 }
