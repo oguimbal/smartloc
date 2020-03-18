@@ -1,6 +1,6 @@
 {
   "name": "smartloc",
-  "version": "1.0.44",
+  "version": "1.0.45",
   "description": "A i18n toolset for nodejs apis leveraging tagged strings",
   "main": "index.js",
   "scripts": {

@@ -121,6 +121,7 @@ export class SmartLoc implements LocStr {
         if (typeof locale === 'string') {
             locale = getLocale(locale);
         }
+
         if (locale) {
             const localized = locale.localize(this.id, this.literals, this.placeholders);
             if (localized) {
