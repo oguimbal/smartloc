@@ -30,24 +30,33 @@ function parseValue(value) {
 
 function parseObject(ast, variables) {
     const value = Object.create(null);
+    let hasValue = false;
     ast.fields.forEach(field => {
+        let val: string;
         switch (field.value.kind) {
             case Kind.STRING:
-                value[field.name.value] = ast.value.value;
+                val = field.value.value;
                 break;
             case Kind.VARIABLE: {
-                const name = ast.name.value;
-                const val = variables ? variables[name] : undefined;
-                if (typeof val !== 'string' || !val) {
-                    throw new TypeError(INVALID_MSG);
-                }
+                val = variables?.[field.value.name.value];
                 break;
             }
             default:
                 throw new TypeError(INVALID_MSG);
         }
+        if (val === null || val === undefined) {
+            return;
+        }
+        if (typeof val !== 'string') {
+            throw new TypeError(INVALID_MSG);
+        }
+        hasValue = true;
+        value[field.name.value] = val;
     });
-    return value;
+    if (!hasValue) {
+        return null;
+    }
+    return new MultiLoc(value);
 }
 
 function parseLiteral(ast, variables) {
