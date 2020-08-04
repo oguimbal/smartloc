@@ -7,6 +7,8 @@ If like me:
 
 ... then this library might be for you.
 
+Read a tutorial to learn how to use this lib [here](https://dev.to/oguimbal/i18n-express-apollo-graphql-server-translation-made-simple-33f5)
+
 
 # Framework support
 
