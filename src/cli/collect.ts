@@ -56,7 +56,7 @@ export function collect(source: string, forceLocale?: string): { collected: Tran
     let fcount = 0;
     for (const f of walk('')) {
         const ext = f.toLowerCase();
-        if (!ext.endsWith('.js') && !ext.endsWith('.ts')) {
+        if (!ext.endsWith('.js') && !ext.endsWith('.ts') && !ext.endsWith('.jsx') && !ext.endsWith('.tsx')) {
             continue;
         }
         fcount++;

@@ -98,7 +98,6 @@ export const GLocString = new GraphQLScalarType({
 
 const patchedTag = Symbol('_smartloc_patched');
 export function localizeSchema(schema: GraphQLSchema) {
-    const qt = schema.getQueryType();
     const patched = new Set();
     function patchObject(type: GraphQLObjectType) {
         if (!(type instanceof GraphQLObjectType)) {
@@ -138,7 +137,8 @@ export function localizeSchema(schema: GraphQLSchema) {
         }
     }
 
-    patchObject(qt);
+    patchObject(schema.getQueryType());
+    patchObject(schema.getMutationType());
     return schema;
 }
 
