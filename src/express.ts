@@ -49,7 +49,7 @@ export default function (options?: SmartlocExpressOptions) {
 
                 // === resolve locales from headers
                 if (!locales || !locales.length) {
-                    const lh = req.headers['accept-language'];
+                    const lh = req?.headers?.['accept-language'];
                     if (!lh) {
                         next();
                         return; // => no locale... just serve without patching

@@ -195,7 +195,7 @@ function patchContextObj(req: express.Request, ctx: any) {
     if (ctx[localeTag]) {
         return ctx;
     }
-    const lh = req.headers['accept-language'];
+    const lh = req?.headers?.['accept-language'];
     if (!lh) {
         return ctx;
     }
