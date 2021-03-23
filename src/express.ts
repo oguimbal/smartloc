@@ -1,7 +1,11 @@
-import { withLocales } from '.';
+import { withLocales, isLocStr } from '.';
 import parser from 'accept-language-parser';
 
-const supportedMethods = ['json', 'send', 'jsonp'];
+const supportedMethods = [
+    { key: 'json', },
+    { key: 'jsonp', },
+    { key: 'send', fn: (v: any) => isLocStr(v) ? v.toString() : v },
+];
 
 export interface SmartlocExpressOptions {
     /**  (optional) Waits for this promise before performing a translation. This might be for instance the promise that waits all locales to be declared via addLocale() loaded */
@@ -59,11 +63,13 @@ export default function (options?: SmartlocExpressOptions) {
                 }
 
                 // === override methods that sends potentially translatable content
-                for (const k of supportedMethods) {
-                    const orig = res[k];
-                    res[k] = function (...args: any[]) {
+                for (const { key, fn } of supportedMethods) {
+                    const orig: Function = res[key];
+                    res[key] = function (fst: any, ...args: any[]) {
                         return withLocales(locales, () => {
-                            return orig.apply(this, args);
+                            return orig.call(this
+                                , fn ? fn(fst) : fst
+                                , ...args);
                         })
                     };
                 }
