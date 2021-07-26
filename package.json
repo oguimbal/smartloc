@@ -1,11 +1,11 @@
 {
   "name": "smartloc",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A i18n toolset for nodejs apis leveraging tagged strings",
   "main": "index.js",
   "scripts": {
     "build": "tsc && cp package.json bin/package.json",
-    "release": "npm run build && npm publish bin"
+    "release": "npm run build && cd bin && npm publish && cd .."
   },
   "bin": {
     "smartloc": "cli/cli.js"
@@ -38,8 +38,8 @@
     "yargs": "~15.1.0"
   },
   "peerDependencies": {
-    "graphql": "~14.5.8",
-    "express": "~4.17.1"
+    "express": "~4.17.1",
+    "graphql": "^0.13.2"
   },
   "devDependencies": {
     "@types/accept-language-parser": "^1.5.1",

@@ -109,12 +109,11 @@ export function localizeSchema(schema: GraphQLSchema) {
         }
         patched.add(type);
         for (const [id, field] of Object.entries(fields)) {
-            if (!field.type) {
+            let ft = (field as any).type;
+            if (!ft) {
                 continue;
             }
 
-
-            let ft = field.type;
             while (true) {
                 if (ft instanceof GraphQLList || ft instanceof GraphQLNonNull) {
                     ft = ft.ofType;
