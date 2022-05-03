@@ -33,7 +33,7 @@
     "js-levenshtein": "^1.1.6",
     "js-sha1": "^0.6.0",
     "json-stable-stringify": "~1.0.1",
-    "moment": "~2.24.0",
+    "moment": "~2.29.2",
     "xliff": "~4.4.0",
     "yargs": "~15.1.0"
   },
