@@ -1,5 +1,5 @@
 import { GraphQLSchema, GraphQLObjectType } from 'graphql';
-import { GraphQLScalarType, GraphQLList, GraphQLUnionType, GraphQLField, GraphQLNonNull } from 'graphql/type/definition';
+import { GraphQLScalarType, GraphQLList, GraphQLUnionType, GraphQLInterfaceType, GraphQLField, GraphQLNonNull, } from 'graphql';
 import express from 'express';
 import { isLocStr } from '.';
 import parser from 'accept-language-parser';
@@ -121,9 +121,13 @@ export function localizeSchema(schema: GraphQLSchema) {
                     break;
                 }
             }
-
             if (ft instanceof GraphQLUnionType) {
                 for (const t of ft.getTypes()) {
+                    patchObject(t);
+                }
+            }
+            if (ft instanceof GraphQLInterfaceType) {
+                for (const t of schema.getPossibleTypes(ft)) {
                     patchObject(t);
                 }
             } else if (ft instanceof GraphQLObjectType) {
