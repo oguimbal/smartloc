@@ -2,7 +2,9 @@ import { ILocaleDef, LocLiteral, ILiteralLocalizer } from './interfaces';
 import { LiteralLocalizer } from './literal';
 import { getLocaleCode } from '../cli/utils';
 import { getLocale } from './locale-list';
+import { autoGenerateId } from './utils';
 
+const emptyStringAutoId = autoGenerateId([]);
 export class DefaultLocale implements ILocaleDef {
 
     readonly literals: ILiteralLocalizer;
@@ -23,6 +25,10 @@ export class DefaultLocale implements ILocaleDef {
         }
 
         if (!parts || !placeholders) {
+            // special case for empty string, which could not be translated.
+            if (id === emptyStringAutoId) {
+                return '';
+            }
             throw new Error(`The smartloc string "${id}" cannot be translated to your default locale. It is likely that is has been deserialized. In order to support deserialized strings, you MUST load your default locale as a classic locale. nb: To generate your default locale translation file through smartloc CLI, use --generateDefault option`)
         }
         const result: string[] = [];
