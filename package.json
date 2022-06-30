@@ -1,11 +1,12 @@
 {
   "name": "smartloc",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "A i18n toolset for nodejs apis leveraging tagged strings",
   "main": "index.js",
   "scripts": {
     "build": "tsc && cp package.json bin/package.json && cp README.md build",
-    "release": "npm run build && cd bin && npm publish && cd .."
+    "release": "npm run build && cd bin && npm publish && cd ..",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "bin": {
     "smartloc": "cli/cli.js"
