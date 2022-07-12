@@ -3,7 +3,7 @@ import path from 'path';
 import giparser from 'gitignore-parser';
 import { CollectResult, Translation } from './interfaces';
 import { autoGenerateId } from '../core/utils';
-
+import util from 'util';
 export interface Loc {
     id: string;
     file: string;
@@ -81,7 +81,7 @@ export function collect(source: string, forceLocale?: string): { collected: Tran
             collectFromSource(content, ids, all, f);
 
         } catch (e) {
-            console.error('Failed to read file ' + f);
+            console.error('Failed to read file ' + f + ': ' + util.inspect(e));
         }
     }
 
@@ -110,7 +110,7 @@ export function collectFromSource(content: string, ids: Map<string, Loc>, all: L
 
 
     // === parse loc() calls
-    const re = /\bloc\s*(\(\s*('|")([a-zA-Z0-9\-_\s\.]+)('|")\s*(:?,\s*)?\))?\s*`([^`]+)`/g;
+    const re = /\bloc\s*(\(\s*('|")([a-zA-Z0-9\-_\s\.]+)('|")\s*(?:,\s*)?\))?\s*`([^`]+)`/g;
     let m: RegExpExecArray;
     while (m = re.exec(content)) {
         let id = m[3];
