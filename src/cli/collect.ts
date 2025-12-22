@@ -1,7 +1,8 @@
-import fs from 'fs';
+import fs from 'fs-extra';
 import path from 'path';
 import giparser from 'gitignore-parser';
-import { CollectResult, Translation } from './interfaces';
+import type { CollectResult, Translation } from '../core/load';
+import type { IFormatAdapter } from './interfaces';
 import { autoGenerateId } from '../core/utils';
 import util from 'util';
 export interface Loc {
@@ -9,9 +10,10 @@ export interface Loc {
     file: string | undefined;
     line: number;
     source: string;
+    plural?: boolean;
 }
 
-export function collect(source: string, forceLocale?: string): { collected: Translation; files: number } {
+export async function collect(source: string, adapter: IFormatAdapter, forceLocale?: string): Promise<{ collected: Translation; files: number }> {
     source = source
         ? path.join(process.cwd(), source)
         : process.cwd();
@@ -19,24 +21,24 @@ export function collect(source: string, forceLocale?: string): { collected: Tran
     // todo: parse .gitignore files in nested directories.
     let ignore: { accepts(path: string): boolean; denies(path: string): boolean; };
     const gitIgnorePath = path.join(source, '.gitignore');
-    if (fs.existsSync(gitIgnorePath)) {
-        const content = fs.readFileSync(gitIgnorePath, 'utf8');
+    if (await fs.pathExists(gitIgnorePath)) {
+        const content = await fs.readFile(gitIgnorePath, 'utf8');
         ignore = giparser.compile(content);
     } else {
         ignore = giparser.compile('');
     }
 
 
-    function* walk(dirRelative: string): IterableIterator<string> {
+    async function* walk(dirRelative: string): AsyncIterableIterator<string> {
         try {
-            const files = fs.readdirSync(path.join(source, dirRelative));
+            const files = await fs.readdir(path.join(source, dirRelative));
             for (const file of files) {
                 const filepath = path.join(source, dirRelative, file);
                 const fileRelative = path.join(dirRelative, file);
                 if (ignore.denies(fileRelative)) {
                     continue;
                 }
-                const stats = fs.statSync(filepath);
+                const stats = await fs.stat(filepath);
                 if (stats.isDirectory()) {
                     yield* walk(fileRelative);
                 } else {
@@ -54,14 +56,14 @@ export function collect(source: string, forceLocale?: string): { collected: Tran
     const all: Loc[] = [];
     let defaultLocale: { val: string; file: string; } | undefined = undefined;
     let fcount = 0;
-    for (const f of walk('')) {
+    for await (const f of walk('')) {
         const ext = f.toLowerCase();
         if (!ext.endsWith('.js') && !ext.endsWith('.ts') && !ext.endsWith('.jsx') && !ext.endsWith('.tsx')) {
             continue;
         }
         fcount++;
         try {
-            const content = fs.readFileSync(path.join(source, f), 'utf8');
+            const content = await fs.readFile(path.join(source, f), 'utf8');
 
             // === try to find setDefaultLocale()
             if (!forceLocale) {
@@ -85,15 +87,45 @@ export function collect(source: string, forceLocale?: string): { collected: Tran
         }
     }
 
+    // === load default locale ===
+    const targetLanguage = defaultLocale?.val || forceLocale;
+    const origFile = targetLanguage ? await adapter.loadLocale(targetLanguage) : null;
+
     // === WRITE RESULT ===
     const result: CollectResult = {};
     for (const v of all) {
-        result[v.id] = {
-            target: v.source,
-        };
+        if (v.plural) {
+
+            // Pluralizable strings must also be "transalted" in source language,
+            //  since the code will only contain the pluralized form
+            // => they must be marked as dirty if need be.
+            const orig = origFile?.resources?.[v.id];
+            let singular: string | null = null;
+            let dirty: boolean | undefined = undefined;
+            if (orig?.target && typeof orig.target !== 'string') {
+                // if the plural has changed, or if there is no singlar in orig file,
+                //  then it must be fixed
+                if (!orig.target.singular || orig.target.plural !== v.source) {
+                    dirty = true;
+                }
+                singular = orig.target?.singular ?? null;
+            }
+
+            result[v.id] = {
+                target: {
+                    singular,
+                    plural: v.source,
+                },
+                dirty,
+            };
+        } else {
+            // simple translations are never dirty: code is law
+            result[v.id] = {
+                target: v.source,
+            };
+        }
     }
 
-    const targetLanguage = defaultLocale?.val || forceLocale;
     if (!targetLanguage) {
         console.error('Cannot infer the default locale. Either call setDefaultLocale() in analyzed sources, or set the --defaultLocale argument');
         process.exit(1);
@@ -110,11 +142,12 @@ export function collectFromSource(content: string, ids: Map<string, Loc>, all: L
 
 
     // === parse loc() calls
-    const re = /\bloc\s*(\(\s*('|")([^'"\n]+)('|")\s*(?:,\s*)?\))?\s*`([^`]*)`/g;
+    const re = /\bloc(\.plural\([^\)]+\))?\s*(\(\s*('|")([^'"\n]+)('|")\s*(?:,\s*)?\))?\s*`([^`]*)`/g;
     let m: RegExpExecArray | null;
     while (m = re.exec(content)) {
-        let id = m[3];
-        const val = m[5];
+        const plural = m[1];
+        let id = m[4];
+        const val = m[6];
 
         // parse format
         const reFormat = /\$\{([^\}]+)\}/g;
@@ -155,6 +188,7 @@ export function collectFromSource(content: string, ids: Map<string, Loc>, all: L
             id,
             line: 0, // todo
             source: raw,
+            plural: plural ? true : undefined,
         };
         all.push(found);
         ids.set(id, found);

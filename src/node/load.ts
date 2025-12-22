@@ -1,8 +1,8 @@
 import path from 'path';
 import fs from 'fs-extra';
 import { loadLocaleFrom } from '../adapters';
-import { Translation } from '../cli/interfaces';
 import { addLocale } from '../core/locale-list';
+import { convertLocale } from 'src/core/load';
 
 /**
  * Loads all locales generated from CLI
@@ -29,16 +29,4 @@ export async function loadLocale(filePath: string, merge?: boolean) {
     const transformed = convertLocale(locale);
     addLocale(locale.targetLanguage, transformed, merge);
     return true;
-}
-
-
-
-function convertLocale(locale: Translation): {[key: string]: string} {
-    const ret: {[key: string]: string} = {};
-    for (const [k, v] of Object.entries(locale.resources)) {
-        if (v.target) {
-            ret[k] = v.target;
-        }
-    }
-    return ret;
 }

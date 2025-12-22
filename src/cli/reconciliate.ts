@@ -1,54 +1,57 @@
-import { Translation, CollectItem } from './interfaces';
+import type { Translation, CollectItem } from '../core/load';
 import levenshtein from 'js-levenshtein';
 import diacritics from 'diacritics';
+import { deepEqual } from './utils';
+import type { TranslationTarget } from '../core/interfaces';
 
 const cache: Record<string, string> = {};
-function clean(str: string) {
+function asKey(t: TranslationTarget) {
+    const str = typeof t === 'string' ? t : t.plural;
     if (cache[str]) {
         return cache[str];
     }
     return cache[str] = diacritics.remove(str.toLowerCase().trim());
 }
 
-export function reconciliate(trans: Translation, def: Translation) {
+export function reconciliate(translations: Translation, source: Translation) {
     // source is the new one
-    trans.sourceLanguage = def.targetLanguage;
+    translations.sourceLanguage = source.targetLanguage;
 
     // stores which translations do not exist in code anymore
     const translatedLost: { [original: string]: CollectItem; } = {};
 
-    function updateWithOrig(translated: CollectItem, origId: string, orig: CollectItem) {
-        if (translated.source && translated.source !== orig.target) {
-            translated.dirty = true;
+    function updateWithOrig(trans: CollectItem, origId: string, src: CollectItem) {
+        if (trans.source && !deepEqual(trans.source, src.target)) {
+            trans.dirty = true;
         }
-        translated.source = orig.target;
-        trans.resources[origId] = translated;
+        trans.source = src.target ?? undefined;
+        translations.resources[origId] = trans;
         // remove it from 'def'
-        delete def.resources[origId];
+        delete source.resources[origId];
     }
 
     // update source lines
-    for (const [id, value] of Object.entries(trans.resources)) {
-        const d = def.resources[id];
+    for (const [id, trans] of Object.entries(translations.resources)) {
+        const d = source.resources[id];
         if (d) {
             // already exists => update
-            updateWithOrig(value, id, d);
+            updateWithOrig(trans, id, d);
         } else {
             // does not exist anymore => remove, but keep in mind.
-            delete trans.resources[id];
-            if (value.source) {
-                translatedLost[clean(value.source)] = value;
+            delete translations.resources[id];
+            if (trans.source) {
+                translatedLost[asKey(trans.source)] = trans;
             }
         }
     }
 
     // for each NEW translations missing
     // try to reconciliate with those which have changed id, but still same translation.
-    for (const [id, value] of Object.entries(def.resources)) {
+    for (const [id, value] of Object.entries(source.resources)) {
         if (!value.target) {
             continue;
         }
-        const cleanTarget = clean(value.target);
+        const cleanTarget = asKey(value.target);
         if (translatedLost[cleanTarget]) {
             updateWithOrig(translatedLost[cleanTarget], id, value);
         }
@@ -57,13 +60,13 @@ export function reconciliate(trans: Translation, def: Translation) {
     // try to reconciliate with strings that look alike
     // nb: avoid doing that when too much deleted translations: Levenshtein distance computation is expensive
     const lostKeys = Object.keys(translatedLost);
-    if (Object.keys(def.resources).length * lostKeys.length < 5000 && lostKeys.length > 0) {
+    if (Object.keys(source.resources).length * lostKeys.length < 5000 && lostKeys.length > 0) {
         const reconc: { origId: string; orig: CollectItem; translatedLostSource: string; distance: number }[] = [];
         for (const lk of lostKeys) {
-            reconc.push(...Object.entries(def.resources)
+            reconc.push(...Object.entries(source.resources)
                 .map(([id, orig]) => {
                     // distance between the lost source & the new source
-                    const target =  orig.target ? clean(orig.target) : null;
+                    const target = orig.target ? asKey(orig.target) : null;
                     const distance = target ? levenshtein(lk, target) : Infinity;
                     return {
                         origId: id,
@@ -89,9 +92,9 @@ export function reconciliate(trans: Translation, def: Translation) {
     }
 
     // finally, add new translations...
-    for (const [id, value] of Object.entries(def.resources)) {
-        trans.resources[id] = {
-            source: value.target,
+    for (const [id, value] of Object.entries(source.resources)) {
+        translations.resources[id] = {
+            source: value.target ?? undefined,
         };
     }
 
@@ -101,9 +104,10 @@ export function reconciliate(trans: Translation, def: Translation) {
     let missing = 0;
     const same: string[] = [];
     let dirty = 0;
-    for (const [k, c] of Object.entries(trans.resources)) {
+    for (const [k, c] of Object.entries(translations.resources)) {
         if (!c.target) {
             missing++;
+            c.target = null; // so it is serialized as json
         } else if (c.target === c.source) {
             same.push(k);
         }

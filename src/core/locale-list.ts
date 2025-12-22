@@ -1,17 +1,52 @@
-import { ILocaleDef } from './interfaces';
+import { ILocaleDef, TranslationTarget } from './interfaces';
 import { DefaultLocale } from './default-locale';
 import { Locale } from './locale';
 
-let locales: {[key: string]: Locale} = {};
+let locales: { [key: string]: Locale } = {};
 
-let defaultLocale: ILocaleDef;
+let defaultLocale: ILocaleDef | null = null;
+let currentLocale: ILocaleDef | null = null;
 
 /** Defines the locale used in code */
 export function setDefaultLocale(localeId: string) {
     defaultLocale = new DefaultLocale(localeId);
+    currentLocale = defaultLocale;
+}
+
+export function changeLocale(locale: ILocaleDef | string, throwIfNotFound = true) {
+    const loc = typeof locale === 'string' ? getLocale(locale) : locale;
+    if (!loc) {
+        if (!throwIfNotFound) {
+            return 'not found';
+        }
+        throw new Error(`Locale '${locale}' not found. Please load it first`);
+    }
+    if (currentLocale === loc) {
+        return 'unchanged';
+    }
+    currentLocale = loc;
+    subs.forEach(sub => sub());
+    return 'changed';
+}
+
+const subs: Set<() => void> = new Set();
+export function subscribeToLocaleChange(callback: () => void) {
+    subs.add(callback);
+    return () => { subs.delete(callback); };
+}
+export function getCurrentLocale(noDefault?: false): ILocaleDef;
+export function getCurrentLocale(noDefault: true): ILocaleDef | null;
+export function getCurrentLocale(noDefault = false) {
+    if (currentLocale || noDefault) {
+        return currentLocale ?? null;
+    }
+    return getDefaultLocale();
 }
 
 export function getDefaultLocale() {
+    if (!defaultLocale) {
+        throw new Error('You must specify default locale via setDefaultLocale() before using localization');
+    }
     return defaultLocale;
 }
 
@@ -40,9 +75,9 @@ export function removeLocale(id: string) {
  * @param localeDef Translations (string id as key, formatted string as values - ex : {myId: 'Translated {0} text {1}'})
  * @param merge If true, then the translations will be merged with already existing translations.
  */
-export function addLocale(id: string, localeDef: {[id: string]: string}, merge?: boolean) {
+export function addLocale(id: string, localeDef: { [id: string]: TranslationTarget }, merge?: boolean) {
     id = id.toLowerCase();
-    let loc  = locales[id];
+    let loc = locales[id];
     if (loc) {
         if (!merge) {
             throw new Error(`There already is a locale '${id}' defined. Set the 'merge' argument to 'true' if you want to add translations`);
@@ -78,7 +113,16 @@ function baseLocale(l: string) {
     return m?.[1] || null;
 }
 
-export function *listLocales() {
+export function* listLocales() {
     yield* Object.keys(locales);
-    yield defaultLocale.id;
+    if (defaultLocale) {
+        yield defaultLocale.id;
+    }
+}
+
+export function* listLocaleDefs(): IterableIterator<ILocaleDef> {
+    yield* Object.values(locales);
+    if (defaultLocale) {
+        yield defaultLocale;
+    }
 }

@@ -26,7 +26,7 @@ describe('Translation', () => {
     });
 
 
-    it ('fallsback on second language when main misses a translation key', () => {
+    it('fallsback on second language when main misses a translation key', () => {
         addLocale('gb', {});
         addLocale('fr-FR', {
             'def': 'la langue par défaut est "{0}"',

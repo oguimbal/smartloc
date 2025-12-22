@@ -1,4 +1,4 @@
-import { MultiLoc, SingleLoc, SmartLoc, withSerializationContext, withLocales, SerializationContextOptions } from './smartloc';
+import { singleLoc, multiLoc, withSerializationContext, withLocales, SerializationContextOptions, smartLoc } from './smartloc';
 import { isLocStr } from './literal';
 import type { TranslationOf, StorableOf } from './interfaces';
 
@@ -26,10 +26,15 @@ function _toLocalizable(value: any, depth: number): any {
 
     if (typeof value === 'string') {
         if (value.startsWith('i18n/single:')) {
-            return new SingleLoc(value.substr('i18n/single:'.length));
+            return singleLoc(value.substr('i18n/single:'.length));
         }
         if (value.startsWith('i18n/id:')) {
-            return new SmartLoc(value.substr('i18n/id:'.length), null, null);
+            return smartLoc({
+                id: value.substr('i18n/id:'.length),
+                count: undefined,
+                literals: null,
+                placeholders: null
+            });
         }
         return value;
     }
@@ -58,7 +63,12 @@ function _toLocalizable(value: any, depth: number): any {
 
     // === handle smartloc with args
     if (keys.length === 2 && keys.includes('i18n') && keys.includes('data') && typeof value.i18n === 'string' && value.data instanceof Array) {
-        return new SmartLoc(value.i18n, null, value.data);
+        return smartLoc({
+            id: value.i18n,
+            literals: null,
+            placeholders: value.data,
+            count: value.count
+        });
     }
 
     // === handle multi
@@ -67,7 +77,7 @@ function _toLocalizable(value: any, depth: number): any {
         for (const k of keys) {
             ret[k.substr('i18n:'.length)] = value[k];
         }
-        return new MultiLoc(ret);
+        return multiLoc(ret);
     }
 
     // === handle plain object

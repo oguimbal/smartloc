@@ -1,6 +1,7 @@
-import { IFormatAdapter, Translation } from '../cli/interfaces';
+import { IFormatAdapter } from '../cli/interfaces';
 import fs from 'fs-extra';
 import path from 'path';
+import type { Translation } from '../core/load';
 
 export abstract class AdapterBase implements IFormatAdapter {
 
@@ -13,6 +14,16 @@ export abstract class AdapterBase implements IFormatAdapter {
         }
         const content = await fs.readFile(filePath, 'utf8');
         return await this.doLoadFile(content);
+    }
+
+    async loadLocale(locale: string): Promise<Translation> {
+        if (!this.target || !await fs.pathExists(this.target)) {
+            return {
+                resources: {},
+                targetLanguage: locale,
+            };
+        }
+        return await this.loadFile(path.join(this.target, `${locale}.json`));
     }
 
     protected abstract doLoadFile(content: string): Promise<Translation>;

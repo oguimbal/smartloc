@@ -1,4 +1,5 @@
-import { Translation, CollectResult, GroupedTranslation } from './interfaces';
+import fastDeepEqual from 'fast-deep-equal';
+import type { CollectResult, GroupedTranslation, Translation } from '../core/load';
 
 export function groupByNamespace(trans: CollectResult): {[namespace: string]: CollectResult} {
     const result: {[namespace: string]: CollectResult} = {};
@@ -25,24 +26,11 @@ export function toGroupedTranslation(translation: Translation): GroupedTranslati
     };
 }
 
-export function ungroupTranslation(translation: GroupedTranslation): Translation {
-    const result: Translation = {
-        targetLanguage: translation.targetLanguage,
-        sourceLanguage: translation.sourceLanguage,
-        resources: {},
-    };
-    for (const [namespace, data] of Object.entries(translation.resources)) {
-        for (const [id, val] of Object.entries(data)) {
-            if (namespace === '$default') {
-                result.resources[id] = val;
-            } else {
-                result.resources[`${namespace}.${id}`] = val;
-            }
-        }
-    }
-    return result;
-}
 
-export function getLocaleCode(locale: string) {
-    return locale && /^[a-z]+/.exec(locale.toLowerCase())?.[0] || undefined;
+export function deepEqual<T>(obj1: T, obj2: T): boolean {
+    // if (typeof Bun !== 'undefined') {
+    //     const inst = Bun;
+    //     return inst.deepEquals(obj1, obj2);
+    // }
+    return fastDeepEqual(obj1, obj2);
 }

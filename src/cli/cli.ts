@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 import yargs, { Argv } from 'yargs';
 import path from 'path';
@@ -82,14 +82,15 @@ yargs
                     process.exit(1);
                 }
 
-                // collect from sources
-                console.log('Collecting from sources...');
-                const { collected, files } = collect(args.source || '.', args.defaultLocale);
-                console.log(`...found ${Object.keys(collected.resources).length} translatable items over ${files} files with default language ${collected.targetLanguage}`);
-
                 // create adapter
                 const outdir = path.join(process.cwd(), args.outDir);
                 const adapter = getAdapter(args.format, outdir);
+
+                // collect from sources
+                console.log('Collecting from sources...');
+                const { collected, files } = await collect(args.source || '.', adapter, args.defaultLocale);
+                console.log(`...found ${Object.keys(collected.resources).length} translatable items over ${files} files with default language ${collected.targetLanguage}`);
+
 
                 // load other locales
                 const others = (await adapter.loadLocales(locales))

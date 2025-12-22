@@ -35,8 +35,19 @@ describe('Json serialization', () => {
 
     it('toJsonStorable() handles smartloc with translate option to "id"', () => {
         const str = { value: loc('something')`Something` };
-        expect(toJsonStorable(str, { nonSelfDescriptive: 'id' })).toEqual({ value: 'i18n/id:something' })
+        const received = toJsonStorable(str, { nonSelfDescriptive: 'id' });
+        expect(received).toEqual({ value: 'i18n/id:something' })
     });
+
+    it('toJsonStorable() handles smartloc with countable translate', () => {
+        const str = { value: loc.plural(42)('something')`Something ${42}` };
+        expect(toJsonStorable(str, { nonSelfDescriptive: 'id' })).toEqual({ value: {
+            i18n: 'something',
+            data: [42],
+            count: 42
+        } })
+    });
+
 
     it('toJsonStorable() handles smartloc with inclusions', () => {
         const str = { value: loc('something')`Answer: ${42} with ${'str'}` };
@@ -58,7 +69,8 @@ describe('Json serialization', () => {
     it('toJsonStorable() handles smartloc with translate option to "skip/"', () => {
         const str = { value: loc('something')`Something` };
         addLocale('fr', { something: 'Quelque chose' })
-        expect(toJsonStorable(str, { nonSelfDescriptive: 'skip' })).toEqual({ value: loc('something')`Something` })
+        const got = toJsonStorable(str, { nonSelfDescriptive: 'skip' });
+        expect(got).toEqual(str);
     });
 
     it('can parse a multiloc', () => {

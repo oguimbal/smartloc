@@ -1,3 +1,4 @@
+import React from 'react';
 import { LocLiteral, LocStr, ILocaleDef, ILiteralLocalizer } from './interfaces';
 
 const locTag = Symbol('_localizable');
@@ -33,7 +34,9 @@ export class LiteralLocalizer implements ILiteralLocalizer {
         });
     }
 
-    localize(data: LocLiteral): string {
+    localize(data: LocLiteral, react: false): string;
+    localize(data: LocLiteral, react: true): React.ReactNode;
+    localize(data: LocLiteral, react: boolean): string | React.ReactNode {
         if (typeof data === 'string') {
             return data;
         }
@@ -50,10 +53,14 @@ export class LiteralLocalizer implements ILiteralLocalizer {
         if (isLocStr(data)) {
             return data.toString(this.locale);
         }
-        return checkNever(data);
+        if (react) {
+            return data as React.ReactNode;
+        } else {
+            if (isLocStr(data)) {
+                return data.toString(this.locale);
+            }
+            console.error(new Error('Cannot use React elements in LocStr elements when not used in a React renderer'));
+            return '';
+        }
     }
-}
-
-function checkNever(_test: never) {
-    return '';
 }

@@ -5,6 +5,16 @@
   "version": "0.2.0",
   "configurations": [
     {
+        "type": "bun",
+        "request": "attach",
+        "name": "Debug --only UT",
+        // The URL of the WebSocket inspector to attach to.
+        // This value can be retrieved by using `bun --inspect`.
+        //  bun test --inspect-wait=0.0.0.0:6499
+        "url": "ws://0.0.0.0:6499/mapi-ut",
+        "preLaunchTask": "launch-only-ut"
+    },
+    {
       "type": "node",
       "request": "launch",
       "name": "Launch Express sample",
@@ -51,37 +61,5 @@
         "<node_internals>/**"
       ]
     },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Mocha All",
-      "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-      "args": [
-        "-r",
-        "ts-node/register",
-        "--timeout",
-        "999999"
-      ],
-      "skipFiles": [
-        "${workspaceRoot}/node_modules/**/*.js",
-        "<node_internals>/**/*.js"
-      ],
-      "protocol": "inspector"
-    },
-    {
-      "name": "Debug Mocha Tests",
-      "type": "node",
-      "request": "attach",
-      "port": 9229,
-      "protocol": "inspector",
-      "timeout": 30000,
-      "stopOnEntry": false,
-      "smartStep": true,
-      "sourceMaps": true,
-      "skipFiles": [
-        "<node_internals>/**",
-        "${workspaceRoot}/node_modules/**/*.js",
-      ],
-    }
   ]
 }

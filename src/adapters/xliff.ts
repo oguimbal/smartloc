@@ -2,8 +2,9 @@
 import js2xliff from 'xliff/js2xliff';
 // @ts-ignore
 import xliff2js from 'xliff/xliff2js';
-import { Translation, GroupedTranslation } from '../cli/interfaces';
-import { toGroupedTranslation, ungroupTranslation } from '../cli/utils';
+import type { Translation, GroupedTranslation } from '../core/load';
+import { toGroupedTranslation } from '../cli/utils';
+import { ungroupTranslation } from '../core/load';
 import { AdapterBase } from './adapter-base';
 
 export class XliffAdapter extends AdapterBase {

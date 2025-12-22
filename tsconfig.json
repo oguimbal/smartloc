@@ -1,9 +1,11 @@
 {
     "compilerOptions": {
-      "target": "es2018",
+      "target": "ES2022",
+      "lib": ["ES2022", "DOM", "DOM.Iterable"],
       "module": "commonjs",
       "outDir": "bin",
       "sourceMap": true,
+      "jsx": "react-jsx",
       "newLine": "lf",
       "esModuleInterop": true,
       "keyofStringsOnly": false,
@@ -28,7 +30,7 @@
     },
     "include": [
       "src/**/*.ts"
-    ],
+, "src/core/renderer.tsx"    ],
     "exclude": [
       "node_modules"
     ]

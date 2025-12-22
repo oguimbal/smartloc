@@ -1,7 +1,7 @@
-import { Translation, GroupedTranslation } from '../cli/interfaces';
+import { type Translation, type GroupedTranslation, ungroupTranslation } from '../core/load';
 import stableJson from 'json-stable-stringify';
-import { toGroupedTranslation, ungroupTranslation } from '../cli/utils';
 import { AdapterBase } from './adapter-base';
+import { toGroupedTranslation } from '../cli/utils';
 
 export class JsonAdapter extends AdapterBase {
 

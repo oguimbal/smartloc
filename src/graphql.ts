@@ -3,7 +3,7 @@ import { GraphQLScalarType, GraphQLList, GraphQLUnionType, GraphQLInterfaceType,
 import express from 'express';
 import { isLocStr } from '.';
 import parser from 'accept-language-parser';
-import { withLocales, MultiLoc, SingleLoc } from './core/smartloc';
+import { withLocales, multiLoc, singleLoc } from './core/smartloc';
 import { translateInContext } from './core/json-utils';
 import { Kind } from 'graphql/language';
 
@@ -13,7 +13,7 @@ function parseValue(value: any) {
         return null;
     }
     if (typeof value === 'string') {
-        return new SingleLoc(value);
+        return singleLoc(value);
     }
     if (typeof value === 'object') {
         for (const v of Object.values(value)) {
@@ -21,7 +21,7 @@ function parseValue(value: any) {
                 throw new TypeError(INVALID_MSG);
             }
         }
-        return new MultiLoc(value);
+        return multiLoc(value);
     }
     throw new TypeError(INVALID_MSG);
 }
@@ -54,13 +54,13 @@ function parseObject(ast: any, variables: any) {
     if (!hasValue) {
         return null;
     }
-    return new MultiLoc(value);
+    return multiLoc(value);
 }
 
 function parseLiteral(ast: any, variables: any) {
     switch (ast.kind) {
         case Kind.STRING:
-            return new SingleLoc(ast.value);
+            return singleLoc(ast.value);
         case Kind.OBJECT:
             return parseObject(ast, variables);
         case Kind.NULL:

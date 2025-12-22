@@ -1,6 +1,7 @@
-import { IFormatAdapter, Translation } from '../cli/interfaces';
+import type { IFormatAdapter } from '../cli/interfaces';
 import { XliffAdapter } from './xliff';
 import { JsonAdapter } from './json';
+import type { Translation } from '../core/load';
 
 export function getAdapter(format: string, dir: string): IFormatAdapter {
     switch (format) {
