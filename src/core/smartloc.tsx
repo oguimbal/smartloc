@@ -204,10 +204,21 @@ function createKind<props extends object>(opts: {
     // trick to create a function that is named like the given name
     const creator = {
         [opts.name](props: props): LocStr {
+            // This is a dirty hack to create some item that will both be recognized by React as a valid element,
+            // but that also behaves as a LocStr with the appropriate methods.
+            // 1) create a react element
             const e = React.createElement(Renderer, props);
-            const eProps = Object.getOwnPropertyDescriptors(e);
+
+            // 2) create a new instance of our LocStr kind
             const ret = Object.create(Proto.prototype);
+
+            // 3) raw-copy what the react element has as  properties
+            //   ... this work because React.createElement() actually only creates a raw frozen object with some properties.
+            //    see createElement() source code
+            const eProps = Object.getOwnPropertyDescriptors(e);
             Object.defineProperties(ret, eProps);
+
+            // 4) set the isLoc flag to true so isLocStr() will recognize this instance
             setIsLoc(ret); // this will freeze the object
             return ret;
         }
