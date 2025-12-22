@@ -1,7 +1,6 @@
 import { MultiLoc, SingleLoc, SmartLoc, withSerializationContext, withLocales, SerializationContextOptions } from './smartloc';
-import moment from 'moment';
 import { isLocStr } from './literal';
-import { TranslationOf, StorableOf } from './interfaces';
+import type { TranslationOf, StorableOf } from './interfaces';
 
 /**
  * Parse a JSON string where localized strings have been serialized in their non translated form
@@ -17,7 +16,7 @@ export function jsonParseLocalized(value: string) {
 export function toLocalizable(value: any) {
     return _toLocalizable(value, 50);
 }
-function _toLocalizable(value: any, depth: number) {
+function _toLocalizable(value: any, depth: number): any {
     if (depth < 0) {
         throw new Error('This object is either too nested, or has cycles');
     }
@@ -63,7 +62,7 @@ function _toLocalizable(value: any, depth: number) {
     }
 
     // === handle multi
-    const ret = {};
+    const ret: Record<string, string> = {};
     if (!keys.some(x => !x.startsWith('i18n:'))) {
         for (const k of keys) {
             ret[k.substr('i18n:'.length)] = value[k];
@@ -113,11 +112,11 @@ function _toJsonStorable(v: any, depth: number) {
     if (typeof v !== 'object') {
         return v;
     }
-    if (moment.isMoment(v) || moment.isDuration(v)) {
+    if (v instanceof Date) {
         return v;
     }
     if (v instanceof Array) {
-        let ret: any[];
+        let ret: any[] | undefined = undefined;
         for (let i = 0; i < v.length; i++) {
             const p = _toJsonStorable(v[i], depth - 1);
             if (p !== v[i] && !ret) {
@@ -136,7 +135,7 @@ function _toJsonStorable(v: any, depth: number) {
         return v.toJSON();
     }
 
-    const obj = {};
+    const obj: Record<string, any> = {};
     let diff = false;
     for (const [k, p] of Object.entries(v)) {
         const val = _toJsonStorable(p, depth - 1);

@@ -1,6 +1,5 @@
-import 'mocha';
-import {expect, assert} from 'chai';
-import {reconciliate} from '../src/cli/reconciliate';
+import { describe, it, expect } from 'bun:test';
+import { reconciliate } from '../src/cli/reconciliate';
 import { CollectResult } from '../src/cli/interfaces';
 
 
@@ -26,88 +25,88 @@ describe('Reconciliation', () => {
             a: { source: 'Sentence A', target: 'Phrase A' },
             b: { source: 'Sentence B', target: 'Phrase B' },
         };
-        return {orig, trans};
+        return { orig, trans };
     }
 
-    it ('does nothing when ok', () => {
-        const {orig, trans} = setupAB();
-        const {dirty, missing, same} = recon(trans, orig);
-        expect(dirty).to.equal(0);
-        expect(missing).to.equal(0);
-        expect(same).to.deep.equal([]);
+    it('does nothing when ok', () => {
+        const { orig, trans } = setupAB();
+        const { dirty, missing, same } = recon(trans, orig);
+        expect(dirty).toEqual(0);
+        expect(missing).toEqual(0);
+        expect(same).toEqual([]);
     });
 
 
-    it ('marks as dirty', () => {
-        const {orig, trans} = setupAB();
+    it('marks as dirty', () => {
+        const { orig, trans } = setupAB();
 
         // change 'in code' sentence
         orig.a.target = 'New sentence A';
 
-        const {dirty, missing, same} = recon(trans, orig);
-        expect(dirty).to.equal(1);
-        expect(missing).to.equal(0);
-        expect(same).to.deep.equal([]);
-        assert.isTrue(trans.a.dirty);
-        expect(trans.a.source).to.equal('New sentence A');
+        const { dirty, missing, same } = recon(trans, orig);
+        expect(dirty).toEqual(1);
+        expect(missing).toEqual(0);
+        expect(same).toEqual([]);
+        expect(trans.a.dirty).toBe(true);
+        expect(trans.a.source).toEqual('New sentence A');
     });
 
 
-    it ('adds new sentence', () => {
-        const {orig, trans} = setupAB();
+    it('adds new sentence', () => {
+        const { orig, trans } = setupAB();
 
         // add new 'in code' sentence
         orig.c = { target: 'Sentence C' };
 
-        const {dirty, missing, same} = recon(trans, orig);
-        expect(dirty).to.equal(0);
-        expect(missing).to.equal(1);
-        expect(same).to.deep.equal([]);
-        expect(trans.c.source).to.equal('Sentence C');
-        assert.notExists(trans.c.target);
+        const { dirty, missing, same } = recon(trans, orig);
+        expect(dirty).toEqual(0);
+        expect(missing).toEqual(1);
+        expect(same).toEqual([]);
+        expect(trans.c.source).toEqual('Sentence C');
+        expect(trans.c.target).toBeUndefined();
     });
 
 
 
-    it ('finds on ID change', () => {
-        const {orig, trans} = setupAB();
+    it('finds on ID change', () => {
+        const { orig, trans } = setupAB();
 
         // add new 'in code' sentence
         orig.newb = orig.b;
         delete orig.b;
 
-        const {dirty, missing, same} = recon(trans, orig);
-        expect(dirty).to.equal(0);
-        expect(missing).to.equal(0);
-        expect(same).to.deep.equal([]);
-        assert.notExists(trans.b);
-        assert.exists(trans.newb);
-        expect(trans.newb.source).to.equal('Sentence B');
+        const { dirty, missing, same } = recon(trans, orig);
+        expect(dirty).toEqual(0);
+        expect(missing).toEqual(0);
+        expect(same).toEqual([]);
+        expect(trans.b).toBeUndefined();
+        expect(trans.newb).toBeDefined();
+        expect(trans.newb.source).toEqual('Sentence B');
     });
 
 
-    it ('finds on ID and content change change', () => {
-        const {orig, trans} = setupAB();
+    it('finds on ID and content change change', () => {
+        const { orig, trans } = setupAB();
 
         // add new 'in code' sentence
         orig.newb = orig.b;
         orig.newb.target = 'Sentence B bis';
         delete orig.b;
 
-        const {dirty, missing, same} = recon(trans, orig);
-        expect(dirty).to.equal(1); // source changed => dirty
-        expect(missing).to.equal(0);
-        expect(same).to.deep.equal([]);
-        assert.notExists(trans.b);
-        assert.exists(trans.newb);
-        expect(trans.newb.source).to.equal('Sentence B bis');
-        expect(trans.newb.target).to.equal('Phrase B');
+        const { dirty, missing, same } = recon(trans, orig);
+        expect(dirty).toEqual(1); // source changed => dirty
+        expect(missing).toEqual(0);
+        expect(same).toEqual([]);
+        expect(trans.b).toBeUndefined();
+        expect(trans.newb).toBeDefined();
+        expect(trans.newb.source).toEqual('Sentence B bis');
+        expect(trans.newb.target).toEqual('Phrase B');
     });
 
 
 
-    it ('finds multiple ID and content change', () => {
-        const {orig, trans} = setupAB();
+    it('finds multiple ID and content change', () => {
+        const { orig, trans } = setupAB();
 
         // add new 'in code' sentence
         orig.newa = orig.a;
@@ -117,17 +116,17 @@ describe('Reconciliation', () => {
         delete orig.b;
         delete orig.a;
 
-        const {dirty, missing, same} = recon(trans, orig);
-        expect(dirty).to.equal(2); // source changed => dirty
-        expect(missing).to.equal(0);
-        expect(same).to.deep.equal([]);
-        assert.notExists(trans.a);
-        assert.notExists(trans.b);
-        assert.exists(trans.newa);
-        assert.exists(trans.newb);
-        expect(trans.newa.source).to.equal('Sentence A bis');
-        expect(trans.newb.source).to.equal('Sentence B bis');
-        expect(trans.newa.target).to.equal('Phrase A');
-        expect(trans.newb.target).to.equal('Phrase B');
+        const { dirty, missing, same } = recon(trans, orig);
+        expect(dirty).toEqual(2); // source changed => dirty
+        expect(missing).toEqual(0);
+        expect(same).toEqual([]);
+        expect(trans.a).toBeUndefined();
+        expect(trans.b).toBeUndefined();
+        expect(trans.newa).toBeDefined();
+        expect(trans.newb).toBeDefined();
+        expect(trans.newa.source).toEqual('Sentence A bis');
+        expect(trans.newb.source).toEqual('Sentence B bis');
+        expect(trans.newa.target).toEqual('Phrase A');
+        expect(trans.newb.target).toEqual('Phrase B');
     });
 });

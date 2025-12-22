@@ -8,14 +8,14 @@ const emptyStringAutoId = autoGenerateId([]);
 export class DefaultLocale implements ILocaleDef {
 
     readonly literals: ILiteralLocalizer;
-    readonly code: string;
+    readonly code: string | undefined;
 
     constructor(readonly id: string) {
         this.literals = new LiteralLocalizer(this);
         this.code = getLocaleCode(id);
     }
 
-    localize(id: string, parts: TemplateStringsArray, placeholders: LocLiteral[]): string {
+    localize(id: string, parts: TemplateStringsArray | null, placeholders: LocLiteral[] | null): string {
         const existing = getLocale(this.id);
         if (existing) {
             const exist = existing.localize(id, parts, placeholders);

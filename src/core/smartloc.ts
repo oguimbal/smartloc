@@ -3,7 +3,7 @@ import { ILocaleDef, LocLiteral, LocStr } from './interfaces';
 import { setIsLoc } from './literal';
 import { getLocaleCode } from '../cli/utils';
 
-let langCtx: ILocaleDef[] = null;
+let langCtx: ILocaleDef[] | null = null;
 let serialContext: SerializationContextOptions;
 
 export interface SerializationContextOptions {
@@ -87,7 +87,7 @@ export class TransformedLoc implements LocStr {
  * A localizable string instance
  */
 export class SmartLoc implements LocStr {
-    constructor(public id: string, private literals: TemplateStringsArray, private placeholders: LocLiteral[]) {
+    constructor(public id: string, private literals: TemplateStringsArray | null, private placeholders: LocLiteral[] | null) {
         setIsLoc(this);
     }
 
@@ -97,9 +97,12 @@ export class SmartLoc implements LocStr {
                 case 'skip':
                     return this;
                 case 'toMulti':
-                    const multi = {};
+                    const multi: Record<string, string> = {};
                     for (const l of listLocales()) {
-                        multi[l] = this.toString(l);
+                        const str = this.toString(l);
+                        if (str) {
+                            multi[l] = str;
+                        }
                     }
                     // tslint:disable-next-line: no-use-before-declare
                     return new MultiLoc(multi).toJSON();
@@ -117,7 +120,7 @@ export class SmartLoc implements LocStr {
         return this.toString();
     }
 
-    toString(locale?: string | ILocaleDef) {
+    toString(locale?: string | ILocaleDef | null): string {
         if (typeof locale === 'string') {
             locale = getLocale(locale);
         }
@@ -150,7 +153,7 @@ export class SmartLoc implements LocStr {
 
 /** A loc string that has only one translation for all locales */
 export class SingleLoc implements LocStr {
-    readonly id: string = undefined;
+    readonly id: string | undefined = undefined;
 
     constructor(public text: string) {
         setIsLoc(this);
@@ -174,7 +177,7 @@ export class SingleLoc implements LocStr {
 
 /** A given set of translations */
 export class MultiLoc implements LocStr {
-    readonly id: string = undefined;
+    readonly id: string | undefined = undefined;
 
     constructor(public translations: { [locale: string]: string }) {
         setIsLoc(this);
@@ -182,7 +185,7 @@ export class MultiLoc implements LocStr {
 
     toJSON() {
         if (serialContext) {
-            const ret = {};
+            const ret: Record<string, string> = {};
             for (const [k, v] of Object.entries(this.translations)) {
                 ret[`i18n:${k}`] = v;
             }
@@ -191,18 +194,18 @@ export class MultiLoc implements LocStr {
         return this.toString();
     }
 
-    toString(locale?: string | ILocaleDef) {
+    toString(locale?: string | ILocaleDef): string {
         if (locale) {
             if (typeof locale === 'object') {
                 if (this.translations[locale.id]) {
                     return this.translations[locale.id];
                 }
-                if (this.translations[locale.code]) {
+                if (locale.code && this.translations[locale.code]) {
                     return this.translations[locale.code];
                 }
             } else if (typeof locale === 'string') {
                 for (const l of [locale, getLocaleCode(locale)]) {
-                    if (this.translations[l]) {
+                    if (l && this.translations[l]) {
                         return this.translations[l];
                     }
                 }
@@ -214,7 +217,7 @@ export class MultiLoc implements LocStr {
                 if (this.translations[l.id]) {
                     return this.translations[l.id];
                 }
-                if (this.translations[l.code]) {
+                if (l.code && this.translations[l.code]) {
                     return this.translations[l.code];
                 }
             }
@@ -226,10 +229,10 @@ export class MultiLoc implements LocStr {
         if (this.translations[defaultLocale.id]) {
             return this.translations[defaultLocale.id];
         }
-        if (this.translations[defaultLocale.code]) {
+        if (defaultLocale.code && this.translations[defaultLocale.code]) {
             return this.translations[defaultLocale.code];
         }
-        return null;
+        return '';
     }
 
     transform(transformer: (x: string) => string): LocStr {

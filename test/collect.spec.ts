@@ -1,5 +1,4 @@
-import 'mocha';
-import {expect, assert} from 'chai';
+import {describe, it, expect} from 'bun:test';
 import {collectFromSource, Loc} from '../src/cli/collect';
 import {autoGenerateId} from '../src/core/utils';
 
@@ -18,7 +17,7 @@ describe('Collection', () => {
 
     it ('collect with id', () => {
         const all = col('blah`` loc("myId") `String ${with} some ${params}`');
-        expect(all).to.deep.equal([
+        expect(all).toEqual([
             {id: 'myId', val: 'String {0} some {1}'}
         ])
     });
@@ -27,7 +26,7 @@ describe('Collection', () => {
     it ('collect without id', () => {
         const all = col('blah`` loc `String ${with} some ${params}`');
         const id = autoGenerateId(['String ', ' some ', '']);
-        expect(all).to.deep.equal([
+        expect(all).toEqual([
             {id, val: 'String {0} some {1}'}
         ])
     });

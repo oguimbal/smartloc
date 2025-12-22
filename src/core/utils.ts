@@ -1,6 +1,6 @@
-import sha1 from 'js-sha1';
+import { createHash } from 'crypto';
 
 export function autoGenerateId(str: TemplateStringsArray | string[]): string {
-    const sha = sha1(str.join('|'));
+    const sha = createHash('sha1').update(str.join('|')).digest('hex');
     return 'sha1.' + sha;
 }

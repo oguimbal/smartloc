@@ -13,7 +13,7 @@ export function getAdapter(format: string, dir: string): IFormatAdapter {
     }
 }
 
-export async function loadLocaleFrom(path: string): Promise<Translation> {
+export async function loadLocaleFrom(path: string): Promise<Translation | null> {
     const [ext] = /\.[a-z]+$/.exec(path.toLowerCase()) || [null];
     let adapter: IFormatAdapter;
     switch (ext) {

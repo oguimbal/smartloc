@@ -1,4 +1,4 @@
-import { SmartLoc, SingleLoc } from './smartloc';
+import { SmartLoc } from './smartloc';
 import { LocLiteral, LocStr } from './interfaces';
 import { autoGenerateId } from './utils';
 
@@ -6,7 +6,7 @@ type TagSignature = (literals: TemplateStringsArray, ...placeholders: LocLiteral
 
 export function loc(literals: TemplateStringsArray, ...placeholders: LocLiteral[]): LocStr
 export function loc(uniqueStringId: string): TagSignature;
-export function loc(idOrLiterals?: string | TemplateStringsArray, ...ph: LocLiteral[]): TagSignature | LocStr {
+export function loc(idOrLiterals: string | TemplateStringsArray, ...ph: LocLiteral[]): TagSignature | LocStr {
     if (typeof idOrLiterals === 'string') {
         const id = idOrLiterals;
         return (literals: TemplateStringsArray, ...placeholders: LocLiteral[]) => {
@@ -14,6 +14,6 @@ export function loc(idOrLiterals?: string | TemplateStringsArray, ...ph: LocLite
         };
     }
 
-    const autoId = autoGenerateId(idOrLiterals);
+    const autoId = idOrLiterals && autoGenerateId(idOrLiterals);
     return new SmartLoc(autoId, idOrLiterals, ph) as LocStr;
 }

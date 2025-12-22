@@ -60,7 +60,7 @@ export function addLocale(id: string, localeDef: {[id: string]: string}, merge?:
     }
 }
 
-export function getLocale(id: string): ILocaleDef {
+export function getLocale(id: string): ILocaleDef | null {
     if (!id) {
         return null;
     }

@@ -1,5 +1,4 @@
 import { LocLiteral, LocStr, ILocaleDef, ILiteralLocalizer } from './interfaces';
-import moment from 'moment';
 
 const locTag = Symbol('_localizable');
 export function isLocStr(data: any): data is LocStr {
@@ -13,9 +12,27 @@ export function setIsLoc(data: any) {
 
 export class LiteralLocalizer implements ILiteralLocalizer {
     private numbers: Intl.NumberFormat;
+    private dateTimeFormat: Intl.DateTimeFormat;
+    private dateFormat: Intl.DateTimeFormat;
+
     constructor(private locale: ILocaleDef) {
         this.numbers = new Intl.NumberFormat(locale.id);
+        // Format for dates with time (equivalent to moment's 'LLL')
+        this.dateTimeFormat = new Intl.DateTimeFormat(locale.id, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric'
+        });
+        // Format for dates without time (equivalent to moment's 'LL')
+        this.dateFormat = new Intl.DateTimeFormat(locale.id, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     }
+
     localize(data: LocLiteral): string {
         if (typeof data === 'string') {
             return data;
@@ -24,16 +41,11 @@ export class LiteralLocalizer implements ILiteralLocalizer {
             return this.numbers.format(data);
         }
         if (data instanceof Date) {
-            data = moment(data);
-        }
-        if (moment.isMoment(data)) {
-            if (data.hour() || data.minute()) {
-                return data.locale(this.locale.id).format('LLL');
+            // Check if the date has a time component (non-zero hours or minutes)
+            if (data.getHours() || data.getMinutes()) {
+                return this.dateTimeFormat.format(data);
             }
-            return data.locale(this.locale.id).format('LL');
-        }
-        if (moment.isDuration(data)) {
-            return data.locale(this.locale.id).humanize();
+            return this.dateFormat.format(data);
         }
         if (isLocStr(data)) {
             return data.toString(this.locale);
@@ -42,6 +54,6 @@ export class LiteralLocalizer implements ILiteralLocalizer {
     }
 }
 
-function checkNever(test: never) {
+function checkNever(_test: never) {
     return '';
 }

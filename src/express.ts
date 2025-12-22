@@ -21,8 +21,8 @@ export interface SmartlocExpressOptions {
  */
 export default function (options?: SmartlocExpressOptions) {
     const { errorLogger, customLocaleResolver, waitFor } = options ?? {};
-    let waiter = waitFor;
-    return function (req, res, next) {
+    let waiter: any = waitFor;
+    return function (req: any, res: any, next: any) {
 
         let locales: string[];
 
@@ -31,7 +31,7 @@ export default function (options?: SmartlocExpressOptions) {
             try {
                 // === resolve locales from custom resolver
                 if (!locales) {
-                    const cust = customLocaleResolver(req);
+                    const cust = customLocaleResolver?.(req);
                     if (typeof cust === 'string') {
                         locales = [cust];
                     } else if (cust instanceof Array) {

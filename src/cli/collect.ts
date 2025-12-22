@@ -6,7 +6,7 @@ import { autoGenerateId } from '../core/utils';
 import util from 'util';
 export interface Loc {
     id: string;
-    file: string;
+    file: string | undefined;
     line: number;
     source: string;
 }
@@ -27,7 +27,7 @@ export function collect(source: string, forceLocale?: string): { collected: Tran
     }
 
 
-    function* walk(dirRelative: string) {
+    function* walk(dirRelative: string): IterableIterator<string> {
         try {
             const files = fs.readdirSync(path.join(source, dirRelative));
             for (const file of files) {
@@ -52,7 +52,7 @@ export function collect(source: string, forceLocale?: string): { collected: Tran
 
     const ids = new Map<string, Loc>();
     const all: Loc[] = [];
-    let defaultLocale: { val: string; file: string; };
+    let defaultLocale: { val: string; file: string; } | undefined = undefined;
     let fcount = 0;
     for (const f of walk('')) {
         const ext = f.toLowerCase();
@@ -111,20 +111,20 @@ export function collectFromSource(content: string, ids: Map<string, Loc>, all: L
 
     // === parse loc() calls
     const re = /\bloc\s*(\(\s*('|")([^'"\n]+)('|")\s*(?:,\s*)?\))?\s*`([^`]*)`/g;
-    let m: RegExpExecArray;
+    let m: RegExpExecArray | null;
     while (m = re.exec(content)) {
         let id = m[3];
         const val = m[5];
 
         // parse format
         const reFormat = /\$\{([^\}]+)\}/g;
-        let fm: RegExpExecArray;
+        let fm: RegExpExecArray | null;
         let index = 0;
         let cnt = 0;
         const parts: string[] = [];
-        const idParts: string[] = id ? null : [];
-        while (fm = reFormat.exec(val)) {
-            const literal = val.substr(index, fm.index - index);
+        const idParts: string[] | null = id ? null : [];
+        while (fm = reFormat.exec(val!)) {
+            const literal = val!.substr(index, fm.index - index);
             parts.push(literal);
             idParts?.push(literal);
             index = fm.index + fm[0].length;
@@ -132,12 +132,12 @@ export function collectFromSource(content: string, ids: Map<string, Loc>, all: L
             cnt++;
         }
         // add trailing
-        idParts?.push(val.substr(index));
-        parts.push(val.substr(index));
+        idParts?.push(val!.substr(index));
+        parts.push(val!.substr(index));
 
 
         const raw = parts.join('');
-        id = id || autoGenerateId(idParts);
+        id = id || autoGenerateId(idParts!);
         const exists = ids.get(id);
         // check no dupplicate
         if (exists && exists.source !== raw) {

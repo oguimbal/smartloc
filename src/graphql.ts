@@ -4,13 +4,11 @@ import express from 'express';
 import { isLocStr } from '.';
 import parser from 'accept-language-parser';
 import { withLocales, MultiLoc, SingleLoc } from './core/smartloc';
-import moment from 'moment';
 import { translateInContext } from './core/json-utils';
-import { getDefaultLocale } from './core/locale-list';
 import { Kind } from 'graphql/language';
 
 const INVALID_MSG = `Invalid localizable string input. Expecting either a string in the default locale, or an object like {"en": "English translation", "fr": "Traduction française"}`;
-function parseValue(value) {
+function parseValue(value: any) {
     if (!value) {
         return null;
     }
@@ -28,10 +26,10 @@ function parseValue(value) {
     throw new TypeError(INVALID_MSG);
 }
 
-function parseObject(ast, variables) {
+function parseObject(ast: any, variables: any) {
     const value = Object.create(null);
     let hasValue = false;
-    ast.fields.forEach(field => {
+    ast.fields.forEach((field: any) => {
         let val: string;
         switch (field.value.kind) {
             case Kind.STRING:
@@ -59,7 +57,7 @@ function parseObject(ast, variables) {
     return new MultiLoc(value);
 }
 
-function parseLiteral(ast, variables) {
+function parseLiteral(ast: any, variables: any) {
     switch (ast.kind) {
         case Kind.STRING:
             return new SingleLoc(ast.value);
@@ -140,13 +138,13 @@ export function localizeSchema(schema: GraphQLSchema) {
         }
     }
 
-    patchObject(schema.getQueryType());
-    patchObject(schema.getMutationType());
+    patchObject(schema.getQueryType() as GraphQLObjectType);
+    patchObject(schema.getMutationType() as GraphQLObjectType);
     return schema;
 }
 
 function patchField(id: string, field: GraphQLField<any, any>) {
-    if (field.resolve?.[patchedTag]) {
+    if ((field.resolve as any)?.[patchedTag]) {
         return;
     }
     const or = field.resolve;
@@ -159,7 +157,7 @@ function patchField(id: string, field: GraphQLField<any, any>) {
             : null;
         return withLocales(locales, () => translateInContext(value));
     };
-    field.resolve[patchedTag] = true;
+    (field.resolve as any)[patchedTag] = true;
 }
 
 
@@ -187,7 +185,7 @@ export function localizedContextObject<T>(ctx: T, locales: string[]): T {
     if (!ctx || typeof ctx !== 'object') {
         return ctx;
     }
-    ctx[localeTag] = locales;
+    (ctx as any)[localeTag] = locales;
     return ctx;
 }
 

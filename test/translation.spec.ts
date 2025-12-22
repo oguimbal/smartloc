@@ -1,5 +1,4 @@
-import 'mocha';
-import {expect} from 'chai';
+import { describe, it, expect, beforeEach } from 'bun:test';
 import {loc, setDefaultLocale, addLocale, withLocales, clearLocales} from '../src';
 
 
@@ -12,7 +11,7 @@ describe('Translation', () => {
 
     it ('uses default when no context', () => {
         expect(loc('def')`this uses ${'en'} as default`.toString())
-            .to.equal('this uses en as default');
+            .toEqual('this uses en as default');
     });
 
 
@@ -23,7 +22,7 @@ describe('Translation', () => {
         const translated = withLocales(['fr-FR'], () => {
             return loc('def')`this uses ${'en'} as default`.toString()
         });
-        expect(translated).to.equal('la langue par défaut est "en"');
+        expect(translated).toEqual('la langue par défaut est "en"');
     });
 
 
@@ -35,7 +34,7 @@ describe('Translation', () => {
         const translated = withLocales(['gb', 'fr-FR'], () => {
             return loc('def')`this uses ${'en'} as default`.toString()
         });
-        expect(translated).to.equal('la langue par défaut est "en"');
+        expect(translated).toEqual('la langue par défaut est "en"');
     });
 
 
@@ -45,7 +44,7 @@ describe('Translation', () => {
         const translated = withLocales(['gb', 'fr-FR'], () => {
             return loc('def')`this uses ${'en'} as default`.toString()
         })
-        expect(translated).to.equal('this uses en as default');
+        expect(translated).toEqual('this uses en as default');
     });
 
 
@@ -57,6 +56,6 @@ describe('Translation', () => {
         const translated = withLocales(['fr-FR'], () => {
             return loc`Hello`.toString()
         })
-        expect(translated).to.equal('Bonjour');
+        expect(translated).toEqual('Bonjour');
     });
 });

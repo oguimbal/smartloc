@@ -1,8 +1,5 @@
-
-import moment from 'moment';
-
 export interface LocStr {
-    readonly id: string;
+    readonly id: string | undefined;
     /**
      * Localizes this string. To be used within a @see withLocales scope to have an actual translation.
      */
@@ -13,26 +10,28 @@ export interface LocStr {
     transform(transformer: (x: string) => string): LocStr;
 }
 
-export type LocLiteral = string | number | Date | moment.Moment | moment.Duration | LocStr;
+export type LocLiteral = string | number | Date | LocStr;
 export interface ILiteralLocalizer {
     localize(data: LocLiteral): string;
 }
 
 export interface ILocaleDef {
     readonly id: string;
-    readonly code: string;
+    readonly code: string | undefined;
     readonly literals: ILiteralLocalizer;
-    localize(id: string, parts: TemplateStringsArray, placeholders: LocLiteral[]): string;
+    localize(id: string, parts: TemplateStringsArray | null, placeholders: LocLiteral[] | null): string;
 }
 
 
 export type TranslationOf<T> = T extends LocStr ? string
-    : T extends Object ? {[K in keyof T]: TranslationOf<T[K]>}
-    : T extends (infer E)[] ?  TranslationOf<E>[]
+    : T extends Object ? { [K in keyof T]: TranslationOf<T[K]> }
+    : T extends (infer E)[] ? TranslationOf<E>[]
     : T;
 
 
-export type StorableOf<T> = T extends LocStr ? (string | {[key: string]: string} | {i18n: string; data: any[]})
-    : T extends Object ? {[K in keyof T]: StorableOf<T[K]>}
-    : T extends (infer E)[] ?  StorableOf<E>[]
+export type StorableOf<T> = T extends LocStr ? Stored
+    : T extends Object ? { [K in keyof T]: StorableOf<T[K]> }
+    : T extends (infer E)[] ? StorableOf<E>[]
     : T;
+
+type Stored = string | { [key: string]: string } | { i18n: string; data: any[] } | LocStr; // LocStr is there in case nonDescriptive is 'skip'

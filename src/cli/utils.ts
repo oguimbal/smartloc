@@ -18,12 +18,11 @@ export function groupByNamespace(trans: CollectResult): {[namespace: string]: Co
 }
 
 export function toGroupedTranslation(translation: Translation): GroupedTranslation {
-    const data = {
+    return {
         resources: groupByNamespace(translation.resources),
         sourceLanguage: translation.sourceLanguage,
         targetLanguage: translation.targetLanguage,
     };
-    return data;
 }
 
 export function ungroupTranslation(translation: GroupedTranslation): Translation {
@@ -45,5 +44,5 @@ export function ungroupTranslation(translation: GroupedTranslation): Translation
 }
 
 export function getLocaleCode(locale: string) {
-    return locale && /^[a-z]+/.exec(locale.toLowerCase())?.[0];
+    return locale && /^[a-z]+/.exec(locale.toLowerCase())?.[0] || undefined;
 }

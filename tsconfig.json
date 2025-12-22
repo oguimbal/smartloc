@@ -8,14 +8,22 @@
       "esModuleInterop": true,
       "keyofStringsOnly": false,
       "typeRoots": [],
-      "types": [
-        "node"
-      ],
       "declaration": true,
       "skipLibCheck": true,
       "moduleResolution": "node",
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true,
+
+      /* Linting */
+      "strict": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "erasableSyntaxOnly": false,
+      "noUncheckedSideEffectImports": true,
+      "noFallthroughCasesInSwitch": true,
+      // "noUncheckedIndexedAccess": true,
+      "noImplicitOverride": true,
+
       "baseUrl": "."
     },
     "include": [

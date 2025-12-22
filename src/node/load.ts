@@ -36,7 +36,9 @@ export async function loadLocale(filePath: string, merge?: boolean) {
 function convertLocale(locale: Translation): {[key: string]: string} {
     const ret: {[key: string]: string} = {};
     for (const [k, v] of Object.entries(locale.resources)) {
-        ret[k] = v.target;
+        if (v.target) {
+            ret[k] = v.target;
+        }
     }
     return ret;
 }

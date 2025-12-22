@@ -2,7 +2,7 @@ import { Translation, CollectItem } from './interfaces';
 import levenshtein from 'js-levenshtein';
 import diacritics from 'diacritics';
 
-const cache = {};
+const cache: Record<string, string> = {};
 function clean(str: string) {
     if (cache[str]) {
         return cache[str];
@@ -15,7 +15,7 @@ export function reconciliate(trans: Translation, def: Translation) {
     trans.sourceLanguage = def.targetLanguage;
 
     // stores which translations do not exist in code anymore
-    const translatedLost: {[original: string]: CollectItem; } = {};
+    const translatedLost: { [original: string]: CollectItem; } = {};
 
     function updateWithOrig(translated: CollectItem, origId: string, orig: CollectItem) {
         if (translated.source && translated.source !== orig.target) {
@@ -45,6 +45,9 @@ export function reconciliate(trans: Translation, def: Translation) {
     // for each NEW translations missing
     // try to reconciliate with those which have changed id, but still same translation.
     for (const [id, value] of Object.entries(def.resources)) {
+        if (!value.target) {
+            continue;
+        }
         const cleanTarget = clean(value.target);
         if (translatedLost[cleanTarget]) {
             updateWithOrig(translatedLost[cleanTarget], id, value);
@@ -54,13 +57,14 @@ export function reconciliate(trans: Translation, def: Translation) {
     // try to reconciliate with strings that look alike
     // nb: avoid doing that when too much deleted translations: Levenshtein distance computation is expensive
     const lostKeys = Object.keys(translatedLost);
-    if (Object.keys(def.resources).length * lostKeys.length < 5000 && lostKeys.length > 0)  {
-        const reconc: {origId: string; orig: CollectItem; translatedLostSource: string; distance: number}[] = [];
+    if (Object.keys(def.resources).length * lostKeys.length < 5000 && lostKeys.length > 0) {
+        const reconc: { origId: string; orig: CollectItem; translatedLostSource: string; distance: number }[] = [];
         for (const lk of lostKeys) {
             reconc.push(...Object.entries(def.resources)
                 .map(([id, orig]) => {
                     // distance between the lost source & the new source
-                    const distance = levenshtein(lk, clean(orig.target));
+                    const target =  orig.target ? clean(orig.target) : null;
+                    const distance = target ? levenshtein(lk, target) : Infinity;
                     return {
                         origId: id,
                         orig,
@@ -70,7 +74,7 @@ export function reconciliate(trans: Translation, def: Translation) {
                 })
                 // forbids to much change
                 .filter(x => x.distance < lk.length / 1.5)
-                );
+            );
         }
 
         reconc.sort((a, b) => a.distance - b.distance);
@@ -107,5 +111,5 @@ export function reconciliate(trans: Translation, def: Translation) {
             dirty++;
         }
     }
-    return {missing, same, dirty};
+    return { missing, same, dirty };
 }

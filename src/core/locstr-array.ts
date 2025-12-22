@@ -3,7 +3,7 @@ import { TransformedLoc } from './smartloc';
 import { setIsLoc } from './literal';
 
 class JoinedString implements LocStr {
-    get id(): string {
+    get id(): string | undefined {
         return undefined;
     }
 
@@ -35,7 +35,7 @@ export class LocStringArray {
         return this.strs.map(x => x && (typeof x === 'string' ? x : x.toJSON()));
     }
 
-    map(fn: (x: LocStr, index: number) => LocStr) {
+    map(fn: (x: LocStr | string, index: number) => LocStr | string) {
 
         return new LocStringArray(this.strs.map(fn));
     }
