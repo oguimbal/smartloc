@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import { loadLocaleFrom } from '../adapters';
 import { addLocale } from '../core/locale-list';
-import { convertLocale } from 'src/core/load';
+import { convertLocale } from '../core/load';
 
 /**
  * Loads all locales generated from CLI

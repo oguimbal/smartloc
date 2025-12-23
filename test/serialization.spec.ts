@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'bun:test';
-import { loc, setDefaultLocale, addLocale, withLocales, clearLocales, toJsonStorable, SingleLoc, MultiLoc, jsonParseLocalized, toLocalizable } from '../src';
-import { withSerializationContext, SmartLoc } from '../src/core/smartloc';
+import { loc, setDefaultLocale, addLocale, withLocales, clearLocales, toJsonStorable, jsonParseLocalized, toLocalizable } from '../src';
+import { multiLoc, singleLoc, withSerializationContext } from '../src/core/smartloc';
 
 
 describe('Json serialization', () => {
@@ -11,24 +11,24 @@ describe('Json serialization', () => {
     })
 
     it('toJsonStorable() handles singleloc values', () => {
-        const str = new SingleLoc(`a translation`);
+        const str = singleLoc(`a translation`);
         expect(toJsonStorable(str)).toEqual('i18n/single:a translation')
     });
 
     it('toJsonStorable() handles singleloc props', () => {
-        const str = { value: new SingleLoc(`a translation`) };
+        const str = { value: singleLoc(`a translation`) };
         expect(toJsonStorable(str)).toEqual({ value: 'i18n/single:a translation' })
     });
 
 
     it('toJsonStorable() handles singleloc arrays', () => {
-        const str = { value: [new SingleLoc(`first`), new SingleLoc(`second`)] };
+        const str = { value: [singleLoc(`first`), singleLoc(`second`)] };
         expect(toJsonStorable(str)).toEqual({ value: ['i18n/single:first', 'i18n/single:second'] })
     });
 
 
     it('toJsonStorable() handles multiloc', () => {
-        const str = { value: new MultiLoc({ fr: 'FR value', en: 'EN value' }) };
+        const str = { value: multiLoc({ fr: 'FR value', en: 'EN value' }) };
         expect(toJsonStorable(str)).toEqual({ value: { 'i18n:fr': 'FR value', 'i18n:en': 'EN value', } })
     });
 
@@ -74,10 +74,10 @@ describe('Json serialization', () => {
     });
 
     it('can parse a multiloc', () => {
-        const str = { value: new MultiLoc({ fr: 'FR value', en: 'EN value' }) };
+        const str = { value: multiLoc({ fr: 'FR value', en: 'EN value' }) };
         const serial = withSerializationContext(() => JSON.stringify(str));
         const deser = jsonParseLocalized(serial);
-        expect(deser.value).toBeInstanceOf(MultiLoc);
+        expect(deser.value.locKind).toBeInstanceOf('MultiLoc');
         // check translation
         addLocale('fr-FR', {});
         const translated = withLocales(['fr'], () => JSON.stringify(deser));
@@ -86,12 +86,12 @@ describe('Json serialization', () => {
 
 
     it('can parse a singleloc', () => {
-        const str = { value: [new SingleLoc(`first`), new SingleLoc(`second`)] };
+        const str = { value: [singleLoc(`first`), singleLoc(`second`)] };
         const serial = withSerializationContext(() => JSON.stringify(str));
         const deser = jsonParseLocalized(serial);
         expect(deser.value).toBeInstanceOf(Array);
         for (const k of deser.value) {
-            expect(k).toBeInstanceOf(SingleLoc);
+            expect(k.locKind).toBe('SingleLoc');
         }
         // check translation
         addLocale('fr-FR', {});
@@ -110,7 +110,7 @@ describe('Json serialization', () => {
         const deser = jsonParseLocalized(serial);
         expect(deser.value).toBeInstanceOf(Array);
         for (const k of deser.value) {
-            expect(k).toBeInstanceOf(SmartLoc);
+            expect(k.locKind).toBe('SmartLoc');
         }
         // check translation
         let translated = withLocales(['fr'], () => JSON.stringify(deser));
@@ -130,7 +130,7 @@ describe('Json serialization', () => {
         const deser = jsonParseLocalized(serial);
         expect(deser.value).toBeInstanceOf(Array);
         for (const k of deser.value) {
-            expect(k).toBeInstanceOf(SmartLoc);
+            expect(k.locKind).toBe('SmartLoc');
         }
         // check translation
         let translated = withLocales(['fr'], () => JSON.stringify(deser));

@@ -1,3 +1,5 @@
+import type React from 'react';
+
 export type LocStr = InternalLocStr & React.ReactElement;
 
 export interface InternalLocStr {

@@ -1,6 +1,6 @@
 import { ILocaleDef, ILiteralLocalizer, LocLiteral, TranslationTarget } from './interfaces';
 import { LiteralLocalizer } from './literal';
-import React from 'react';
+import type React from 'react';
 import { asFragment, getLocaleCode } from './utils';
 
 export class Locale implements ILocaleDef {

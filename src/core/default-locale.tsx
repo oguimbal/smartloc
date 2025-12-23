@@ -2,7 +2,7 @@ import { ILocaleDef, LocLiteral, ILiteralLocalizer } from './interfaces';
 import { LiteralLocalizer } from './literal';
 import { getLocale } from './locale-list';
 import { asFragment, autoGenerateId, getLocaleCode } from './utils';
-import React from 'react';
+import type React from 'react';
 
 const emptyStringAutoId = autoGenerateId([]);
 export class DefaultLocale implements ILocaleDef {
