@@ -12,7 +12,7 @@ type LocTag = TagSignature & {
     /** Creates a pluralizable string (will have two versions to be translated based on the given count: singlular & plural) */
     plural(count: number): TagSignature;
     /** Does nothing, except that the translation will not be collected (use for formatting purposes) */
-    nocollect: LocTag
+    readonly nocollect: LocTag
 };
 
 
@@ -41,8 +41,6 @@ _loc.plural = (count: number) => {
     }
     return templater;
 };
-_loc.nocollect = () => {
-    return _loc;
-};
+_loc.nocollect = _loc;
 
 export const loc: LocTag = _loc as any;
