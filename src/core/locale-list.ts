@@ -34,6 +34,8 @@ export function subscribeToLocaleChange(callback: () => void) {
     subs.add(callback);
     return () => { subs.delete(callback); };
 }
+subscribeToLocaleChange.count = () => subs.size;
+
 export function getCurrentLocale(noDefault?: false): ILocaleDef;
 export function getCurrentLocale(noDefault: true): ILocaleDef | null;
 export function getCurrentLocale(noDefault = false) {

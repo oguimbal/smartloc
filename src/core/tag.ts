@@ -8,7 +8,12 @@ type Templater = (literals: TemplateStringsArray, ...placeholders: LocLiteral[])
 declare function _tagSig(id: string): Templater
 declare function _tagSig(literals: TemplateStringsArray, ...placeholders: LocLiteral[]): LocStr;
 type TagSignature = typeof _tagSig;
-type LocTag = TagSignature & { plural(count: number): TagSignature };
+type LocTag = TagSignature & {
+    /** Creates a pluralizable string (will have two versions to be translated based on the given count: singlular & plural) */
+    plural(count: number): TagSignature;
+    /** Does nothing, except that the translation will not be collected (use for formatting purposes) */
+    nocollect: LocTag
+};
 
 
 
@@ -35,6 +40,9 @@ _loc.plural = (count: number) => {
         return __loc(count, idOrLiterals, ...ph);
     }
     return templater;
+};
+_loc.nocollect = () => {
+    return _loc;
 };
 
 export const loc: LocTag = _loc as any;
