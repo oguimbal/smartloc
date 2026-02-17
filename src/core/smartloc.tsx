@@ -175,7 +175,7 @@ function createKind<props extends object>(opts: {
                 }
                 // default locale cannot return null
                 const def = opts.toString(this.props, defaultLocale);
-                if (!def) {
+                if (def === null || def === undefined) {
                     throw new Error('Cannot get a translation'); // should not happen
                 }
                 return def;
