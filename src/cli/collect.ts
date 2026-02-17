@@ -13,7 +13,10 @@ export interface Loc {
     plural?: boolean;
 }
 
-export async function collect(source: string, adapter: IFormatAdapter, forceLocale?: string): Promise<{ collected: Translation; files: number }> {
+export async function collect(source: string, adapter: IFormatAdapter, opts?: {
+    additionalSimpleTag?: SimpleTagParser;
+    forceLocale?: string
+}): Promise<{ collected: Translation; files: number }> {
     source = source
         ? path.join(process.cwd(), source)
         : process.cwd();
@@ -66,7 +69,7 @@ export async function collect(source: string, adapter: IFormatAdapter, forceLoca
             const content = await fs.readFile(path.join(source, f), 'utf8');
 
             // === try to find setDefaultLocale()
-            if (!forceLocale) {
+            if (!opts?.forceLocale) {
                 const defLoc = /\bsetDefaultLocale\s*\(\s*('|")([a-zA-Z\-]+)('|")\s*\)/.exec(content);
                 const newDefLoc = defLoc?.[2];
                 if (newDefLoc) {
@@ -80,7 +83,7 @@ export async function collect(source: string, adapter: IFormatAdapter, forceLoca
                 }
             }
 
-            collectFromSource(content, ids, all, f);
+            collectFromSource(content, ids, all, f, opts?.additionalSimpleTag);
 
         } catch (e) {
             console.error('Failed to read file ' + f + ': ' + util.inspect(e));
@@ -88,7 +91,7 @@ export async function collect(source: string, adapter: IFormatAdapter, forceLoca
     }
 
     // === load default locale ===
-    const targetLanguage = defaultLocale?.val || forceLocale;
+    const targetLanguage = defaultLocale?.val || opts?.forceLocale;
     const origFile = targetLanguage ? await adapter.loadLocale(targetLanguage) : null;
 
     // === WRITE RESULT ===
@@ -138,7 +141,7 @@ export async function collect(source: string, adapter: IFormatAdapter, forceLoca
 }
 
 
-export function collectFromSource(content: string, ids: Map<string, Loc>, all: Loc[], f?: string) {
+export function collectFromSource(content: string, ids: Map<string, Loc>, all: Loc[], f?: string, additionalSimpleTag?: SimpleTagParser) {
 
 
     // === parse loc() calls
@@ -193,4 +196,76 @@ export function collectFromSource(content: string, ids: Map<string, Loc>, all: L
         all.push(found);
         ids.set(id, found);
     }
+
+    if (additionalSimpleTag) {
+        for (const string of additionalSimpleTag(content)) {
+            const id = autoGenerateId([string]);
+            const exists = ids.get(id);
+            if (exists && exists.source !== string) {
+                console.error(`Duplicate translation id '${id}' found in ${f} but was already defined in ${exists.file}`);
+            } else {
+                console.error(`Duplicate translation id '${id}' found in ${f}`);
+            }
+            const found: Loc = {
+                file: f,
+                id,
+                line: 0, // todo
+                source: string,
+                plural: undefined,
+            };
+            all.push(found);
+            ids.set(id, found);
+        }
+    }
+}
+
+
+type SimpleTagParser = (content: string) => IterableIterator<string>;
+
+export function makeSimpleTagParser(syntax: string): SimpleTagParser {
+    // detect string placeholder
+    const i = syntax.indexOf('*');
+    if (i === -1) {
+        throw new Error('Invalid syntax for simple tag: ' + syntax);
+    }
+    const prefix = syntax.substring(0, i);
+    const suffix = syntax.substring(i + 1);
+    return function* parse(content: string) {
+        let position = 0;
+        while (position < content.length) {
+            const idx = content.indexOf(prefix, position);
+            const strChar = content[idx + prefix.length];
+            if (strChar !== '"' && strChar !== "'" && strChar !== '`') {
+                // not a match... restart
+                position = idx + prefix.length;
+                continue;
+            }
+            const stringStart = idx + prefix.length + 1;
+            let stringEnd = stringStart;
+            let string: string | undefined = undefined;
+            while (stringEnd < content.length) {
+                if (content[stringEnd] === strChar) {
+                    // yep, that's a string
+                    string = content.substring(stringStart, stringEnd);
+                    break;
+                }
+                stringEnd++;
+            }
+            // skip string closing quote
+            stringEnd++;
+            if (!string) {
+                // not a match... restart
+                position = idx + prefix.length;
+                continue;
+            }
+            // check suffix
+            if (content.substring(stringEnd, stringEnd + suffix.length) !== suffix) {
+                // not a match... restart
+                position = idx + prefix.length;
+                continue;
+            }
+            yield string;
+            position = stringEnd + suffix.length;
+        }
+    };
 }

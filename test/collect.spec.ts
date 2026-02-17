@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test';
-import { collectFromSource, Loc } from '../src/cli/collect';
+import { collectFromSource, Loc, makeSimpleTagParser } from '../src/cli/collect';
 import { autoGenerateId } from '../src/core/utils';
 
 describe('Collection', () => {
@@ -41,5 +41,24 @@ describe('Collection', () => {
         expect(all).toEqual([
             { id, val: 'String {0} some {1}', plural: true }
         ])
+    });
+});
+
+
+describe('Simple tag parser', () => {
+    it('parses simple tag', () => {
+        const parser = makeSimpleTagParser('Named<*>');
+        expect(Array.from(parser('Named<"some string">'))).toEqual(['some string']);
+        expect(Array.from(parser('Named<"some string"> Named<"another string">'))).toEqual(['some string', 'another string']);
+        // with backticks
+        expect(Array.from(parser('Named<`some string`> Named<`another string`>'))).toEqual(['some string', 'another string']);
+        // with quotes
+        expect(Array.from(parser('Named<"some string"> Named<"another string">'))).toEqual(['some string', 'another string']);
+        // with backticks
+        expect(Array.from(parser('Named<`some string`> Named<`another string`>'))).toEqual(['some string', 'another string']);
+        // with quotes and backticks
+        expect(Array.from(parser('Named<"some string"> Named<`another string`>'))).toEqual(['some string', 'another string']);
+        // with backticks and quotes
+        expect(Array.from(parser('Named<`some string`> Named<"another string">'))).toEqual(['some string', 'another string']);
     });
 });

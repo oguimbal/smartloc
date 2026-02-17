@@ -2,7 +2,7 @@
 
 import yargs, { Argv } from 'yargs';
 import path from 'path';
-import { collect } from './collect';
+import { collect, makeSimpleTagParser } from './collect';
 import { reconciliate } from './reconciliate';
 import { getAdapter } from '../adapters';
 
@@ -67,6 +67,10 @@ yargs
                 return x;
             },
         })
+        .positional('additionalSimpleTag', {
+            description: `Additional simple tag to use for translations (ex: Named<*> will catch any Named<'some string'> etc as transltatables)`,
+            type: 'string',
+        })
         , async args => {
             try {
 
@@ -86,9 +90,14 @@ yargs
                 const outdir = path.join(process.cwd(), args.outDir);
                 const adapter = getAdapter(args.format, outdir);
 
+                const additionalSimpleTag = args.additionalSimpleTag ? makeSimpleTagParser(args.additionalSimpleTag) : undefined;
+
                 // collect from sources
                 console.log('Collecting from sources...');
-                const { collected, files } = await collect(args.source || '.', adapter, args.defaultLocale);
+                const { collected, files } = await collect(args.source || '.', adapter, {
+                    forceLocale: args.defaultLocale,
+                    additionalSimpleTag,
+                });
                 console.log(`...found ${Object.keys(collected.resources).length} translatable items over ${files} files with default language ${collected.targetLanguage}`);
 
 
