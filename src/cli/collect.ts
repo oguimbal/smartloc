@@ -202,9 +202,12 @@ export function collectFromSource(content: string, ids: Map<string, Loc>, all: L
             const id = autoGenerateId([string]);
             const exists = ids.get(id);
             if (exists && exists.source !== string) {
-                console.error(`Duplicate translation id '${id}' found in ${f} but was already defined in ${exists.file}`);
-            } else {
-                console.error(`Duplicate translation id '${id}' found in ${f}`);
+                if (f === exists.file) {
+                    console.error(`Duplicate translation id '${id}' (${string}) found in ${f} but was already defined in ${exists.file}`);
+                } else {
+                    console.error(`Duplicate translation id '${id}' (${string}) found in ${f}`);
+                }
+                continue;
             }
             const found: Loc = {
                 file: f,
@@ -234,6 +237,9 @@ export function makeSimpleTagParser(syntax: string): SimpleTagParser {
         let position = 0;
         while (position < content.length) {
             const idx = content.indexOf(prefix, position);
+            if (idx === -1) {
+                break;
+            }
             const strChar = content[idx + prefix.length];
             if (strChar !== '"' && strChar !== "'" && strChar !== '`') {
                 // not a match... restart
