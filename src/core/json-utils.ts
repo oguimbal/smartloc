@@ -39,7 +39,7 @@ function _toLocalizable(value: any, depth: number): any {
         return value;
     }
 
-    if (typeof value !== 'object' || value instanceof Date) {
+    if (typeof value !== 'object' || value instanceof Date || isLocStr(value)) {
         return value;
     }
 
@@ -62,11 +62,19 @@ function _toLocalizable(value: any, depth: number): any {
     }
 
     // === handle smartloc with args
-    if (keys.length === 2 && keys.includes('i18n') && keys.includes('data') && typeof value.i18n === 'string' && value.data instanceof Array) {
+    // The native encoder includes count (possibly undefined before stringify).
+    // A counted message can have no interpolation data; JSON then keeps null.
+    if (typeof value.i18n === 'string'
+        && (value.data instanceof Array || value.data === null)
+        && keys.includes('data')
+        && (keys.length === 2 || (keys.length === 3 && keys.includes('count')))
+        && (value.count === undefined || typeof value.count === 'number')) {
         return smartLoc({
             id: value.i18n,
             literals: null,
-            placeholders: value.data,
+            // These descriptors can themselves contain messages. Restore them
+            // before rendering so their IDs are not interpolated as literal text.
+            placeholders: _toLocalizable(value.data, depth - 1),
             count: value.count
         });
     }
@@ -112,7 +120,7 @@ export function translateInContext(object: any) {
     return _toJsonStorable(object, 50);
 }
 
-function _toJsonStorable(v: any, depth: number) {
+function _toJsonStorable(v: any, depth: number): any {
     if (depth < 0) {
         throw new Error('This object is either too nested, or has cycles');
     }
@@ -142,7 +150,11 @@ function _toJsonStorable(v: any, depth: number) {
         return ret || v;
     }
     if (isLocStr(v)) {
-        return v.toJSON();
+        const stored = v.toJSON();
+        // toJSON returns the interpolation values as-is. Convert those while
+        // the serialization scope is still active; later JSON.stringify must
+        // not translate a remaining nested LocStr into a fixed-language string.
+        return stored === v ? v : _toJsonStorable(stored, depth - 1);
     }
 
     const obj: Record<string, any> = {};

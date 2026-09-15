@@ -215,6 +215,31 @@ const obj = loadFromDb();
 const serializable = toLocalizable(obj);
 ```
 
+### Recursive object conversion
+
+`toJsonStorable(value)` recursively converts messages in objects and arrays to
+untranslated storage values. Serialize that result with `JSON.stringify` when
+storage requires JSON text. `toLocalizable` accepts the already parsed value:
+
+```typescript
+import { loc, toJsonStorable, toLocalizable } from 'smartloc';
+
+const value = { labels: ['Custom text', loc('save')`Save`, ''] };
+const stored = JSON.stringify(toJsonStorable(value));
+const restored = toLocalizable(JSON.parse(stored));
+```
+
+Plain strings remain strings. Version 2.0.10 also preserves plural counts and
+recursively converts messages used as interpolation values, in both directions.
+Stored ID references require loaded catalogs, including the default-language
+catalog; source templates are not included. These changes keep the existing
+stored representation.
+
+`toJsonStorable` leaves ordinary `Date` values intact until JSON serialization.
+JSON turns them into ISO strings; `toLocalizable` does not infer dates from those
+strings, including inside message interpolations. React elements and
+joined/transformed messages are not supported storage values.
+
 ## Cloning
 Beware, if you deep-clone an object containing smartloc string instances, you must:
 - Clone the object prototype
