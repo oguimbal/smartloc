@@ -2,10 +2,10 @@
   "name": "smartloc",
   "private": true,
   "version": "0.0.0",
-  "description": "A i18n toolset for nodejs apis leveraging tagged strings",
+  "description": "i18n with tagged template strings, for Node APIs (Express, GraphQL) and React apps",
   "main": "src/index.ts",
   "scripts": {
-    "build": "rm -rf bin && bun t && mkdir -p bin && tsc && cp package.release.json bin/package.json && cp README.md bin",
+    "build": "rm -rf bin && bun t && mkdir -p bin && tsc && cp package.release.json bin/package.json && cp README.md AGENTS.md bin && cp -r docs skills bin",
     "release": "bun run build && cd bin && npm publish && cd ..",
     "t": "tsc --project tsconfig.json --noEmit"
   },
@@ -22,8 +22,8 @@
     "tagged-string-template",
     "graphql",
     "translation",
-    "internationalization",
-    "typescript"
+    "typescript",
+    "react"
   ],
   "author": "Olivier Guimbal",
   "license": "MIT",

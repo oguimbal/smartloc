@@ -1,7 +1,7 @@
 {
   "name": "smartloc",
-  "version": "2.0.10",
-  "description": "A i18n toolset for nodejs apis leveraging tagged strings",
+  "version": "2.0.11",
+  "description": "i18n with tagged template strings, for Node APIs (Express, GraphQL) and React apps",
   "main": "index.js",
   "bin": {
     "smartloc": "cli/cli.js"
@@ -16,8 +16,8 @@
     "tagged-string-template",
     "graphql",
     "translation",
-    "internationalization",
-    "typescript"
+    "typescript",
+    "react"
   ],
   "author": "Olivier Guimbal",
   "license": "MIT",
@@ -37,5 +37,13 @@
     "express": "~4.17.1",
     "graphql": "0.13.2",
     "react": "^19"
+  },
+  "agents": {
+    "skills": [
+      {
+        "name": "smartloc",
+        "path": "./skills/smartloc"
+      }
+    ]
   }
 }
